@@ -47,7 +47,7 @@ def _v(label, section, unit, kind="number", *, min=None, max=None, typical=None,
 REGISTRY: dict[str, dict[str, Any]] = {
     # ---- Site & acquisition -------------------------------------------------
     "site.land_area": _v("Land area", "site", "area", min=1, max=10_000_000, typical=(150, 50_000), required=BOTH),
-    "site.land_price": _v("Land / property acquisition price", "site", "currency", min=0, max=1e12, required=BOTH, material=True),
+    "site.land_price": _v("Land / property acquisition price", "site", "currency", min=0, max=1e12, required=BOTH),
     "site.transfer_tax_pct": _v("Transfer tax (ISAI)", "site", "%", min=0, max=15, typical=(0, 6), suggested=4.5,
                                 help="CDMX ISAI is progressive; ~4.5% is a common upper-bracket planning figure."),
     "site.legal_notary_pct": _v("Notary & legal fees", "site", "%", min=0, max=10, typical=(0.5, 3), suggested=1.5),
