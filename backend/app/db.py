@@ -133,6 +133,12 @@ CREATE TABLE IF NOT EXISTS documents (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_documents_project ON documents(project_id);
+CREATE TABLE IF NOT EXISTS message_translations (
+  message_id INTEGER NOT NULL,
+  lang TEXT NOT NULL,               -- en | es
+  content TEXT NOT NULL,
+  PRIMARY KEY (message_id, lang)
+);
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL

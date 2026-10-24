@@ -76,6 +76,10 @@ Reads uploaded files: zoning certificates, permits, contracts, appraisals, budge
 * accepted values become pending proposals (approve or reject on the Documents page or in the Assumption Center)
 * `ask_document` picks relevant chunks of long files by keyword overlap and marks each quote verified or not
 
+## 2c. Translator (`backend/app/agents/translator.py`)
+
+Runs only when the user switches the interface language (or writes in the other language). It translates the chat history into the selected language with a structured `Translation` output (id → text), keeps numbers, names, markdown and file names as they are, and treats the text as data, never as instructions. Each message is translated once per language and cached in `message_translations`; messages that already look like the target language (word heuristic) are never sent to the model. Usage is recorded in the token ledger as purpose `translation`. Endpoint: `POST /api/chat/translate` (owner-checked).
+
 ## 3. Financial Modeling (deterministic, no LLM)
 
 `backend/engine/`: `registry.py` (variables), `validation.py`, `finance.py` (IRR / NPV / S-curve), `model.py` (monthly pro forma, capital stack, waterfall, covenants), `analysis.py` (scenarios, tornado, heatmap, solver, unit-mix optimizer), `sustainability.py`, `asset_mgmt.py`. It has 27 unit tests, including accounting identities.

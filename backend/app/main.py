@@ -518,7 +518,32 @@ def chat_messages(request: Request, project_id: int | None = None):
     owner = owner_of(request)
     if project_id is not None and store.project_owner(project_id) != (True, owner):
         raise HTTPException(404, "Not found.")
-    return store.list_messages(project_id, owner=owner)
+    from .agents.translator import cached
+    msgs = store.list_messages(project_id, owner=owner)
+    lang = CURRENT_LANG.get()
+    have = cached([m["id"] for m in msgs], lang)
+    return [{**m, "content": have[m["id"]], "original": m["content"] if have[m["id"]] != m["content"] else None, "lang": lang}
+            if m["id"] in have else m for m in msgs]
+
+
+class TranslateIn(BaseModel):
+    project_id: int | None = None
+
+
+@app.post("/api/chat/translate")
+async def chat_translate(body: TranslateIn, request: Request):
+    """Translate the whole conversation into the interface language (X-Lang); cached per message."""
+    owner = owner_of(request)
+    if body.project_id is not None and store.project_owner(body.project_id) != (True, owner):
+        raise HTTPException(404, "Not found.")
+    from .agents.runtime import LimitReached, TurnContext
+    from .agents.translator import translate_messages
+    ctx = TurnContext(project_id=body.project_id, purpose="translation", limits=limits(), owner=owner) if ai_available() else None
+    try:
+        msgs = await translate_messages(store.list_messages(body.project_id, owner=owner), CURRENT_LANG.get(), ctx)
+    except LimitReached as exc:
+        raise HTTPException(429, str(exc))
+    return {"messages": msgs, "turn_usage": ctx.summary() if ctx else None}
 
 
 class ChatIn(BaseModel):
@@ -544,8 +569,10 @@ async def chat(body: ChatIn, request: Request):
     lim = {k: (v * mult if k == "max_usd" else int(v * mult)) for k, v in limits().items()}
     queue: asyncio.Queue = asyncio.Queue()
     ctx = TurnContext(project_id=body.project_id, purpose="chat", limits=lim, queue=queue, owner=owner)
+    lang = CURRENT_LANG.get()  # the streaming task runs after the middleware returns, so pin the language here
 
     async def work():
+        CURRENT_LANG.set(lang)
         try:
             final = await run_chat(body.project_id, msg, ctx)
             queue.put_nowait({"type": "final", "data": final})

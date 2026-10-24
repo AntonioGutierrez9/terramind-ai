@@ -637,6 +637,8 @@ async def run_chat(project_id: int | None, message: str, ctx: TurnContext) -> di
     from .runtime import CURRENT_LANG
     snapshot["interface_language"] = "Spanish" if CURRENT_LANG.get() == "es" else "English"
     prompt = f"<project_snapshot>\n{json.dumps(snapshot, ensure_ascii=False, default=str)}\n</project_snapshot>\n\nUser message:\n{message}"
+    prompt += (f"\n\n(Reply language: {snapshot['interface_language']}, the language selected in the interface, "
+               "unless the user explicitly asks for another.)")
     history = _history(project_id, ctx.owner)
     store.add_message(project_id, "user", message, owner=ctx.owner)
     limits = UsageLimits(request_limit=ctx.limits["max_requests"], tool_calls_limit=ctx.limits["max_tool_calls"],

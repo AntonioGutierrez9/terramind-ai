@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bot, Check, Loader2, Mic, MicOff, Paperclip, Send, ShieldCheck, Wrench, X } from 'lucide-react'
+import { Bot, Check, Languages, Loader2, Mic, MicOff, Paperclip, Send, ShieldCheck, Wrench, X } from 'lucide-react'
 import { api, notifyProjectChanged, streamChat, uploadDocument, type Json } from '../api'
 import { useHealth } from '../state'
 import { getLang, t } from '../i18n'
 
-interface Msg { role: 'user' | 'assistant'; content: string; extra?: Json }
+interface Msg { id?: number; role: 'user' | 'assistant'; content: string; extra?: Json; original?: string | null; lang?: string }
+const toMsg = (x: Json): Msg => ({ id: x.id, role: x.role, content: x.content, extra: x.extra, original: x.original, lang: x.lang })
 
 const SUGGESTIONS_PROJECT = [
   'Increase construction costs by 10%',
@@ -72,9 +73,31 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   const health = useHealth()
   const aiOff = health && health.ai_available === false
 
+  const [translating, setTranslating] = useState(false)
+
+  // Keep the whole conversation in the selected interface language: translate (cached per message on the server)
+  // whenever the history is loaded, the language is switched, or a new turn finishes.
+  const syncLanguage = async (keepRetry?: string) => {
+    setTranslating(true)
+    try {
+      const r = await api.post('/api/chat/translate', { project_id: projectId })
+      const list: Msg[] = r.messages.map(toMsg)
+      if (keepRetry && list.length && list[list.length - 1].role === 'assistant') list[list.length - 1].extra = { ...list[list.length - 1].extra, retry: keepRetry }
+      setMsgs(list)
+    } catch { /* keep the messages as they are */ } finally { setTranslating(false) }
+  }
   useEffect(() => {
-    api.get(`/api/chat/messages${projectId ? `?project_id=${projectId}` : ''}`).then((m: Json[]) =>
-      setMsgs(m.map((x) => ({ role: x.role, content: x.content, extra: x.extra }))))
+    api.get(`/api/chat/messages${projectId ? `?project_id=${projectId}` : ''}`).then((m: Json[]) => {
+      setMsgs(m.map(toMsg))
+      if (m.some((x) => x.lang !== getLang())) syncLanguage()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId])
+  useEffect(() => {
+    const h = () => { setLang(getLang() === 'es' ? 'es-MX' : 'en-US'); syncLanguage() }
+    window.addEventListener('tm:lang', h)
+    return () => window.removeEventListener('tm:lang', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
   useEffect(() => { bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs, live, busy])
 
@@ -85,11 +108,13 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
     if (!isRetry) setMsgs((m) => [...m, { role: 'user', content: message }])
     setBusy(true)
     setLive([])
+    let finished = false
     try {
       await streamChat({ message, project_id: projectId, limit_multiplier: mult }, (ev) => {
         if (ev.type === 'final') {
           setMsgs((m) => [...m, { role: 'assistant', content: ev.data.answer, extra: { ...ev.data, retry: message } }])
           notifyProjectChanged(ev.data.project_id ?? projectId)
+          finished = true
         } else if (ev.type === 'error') {
           setMsgs((m) => [...m, { role: 'assistant', content: `⚠️ ${ev.data.message}` }])
         } else {
@@ -111,6 +136,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
       setBusy(false)
       setLive([])
     }
+    if (finished) syncLanguage(message)
   }
 
   const toggleMic = () => {
@@ -175,6 +201,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
             </div>
           </div>
         )}
+        {translating && msgs.length > 0 && <div className="toolchip" style={{ alignSelf: 'center' }}><Languages size={13} /> Translating the conversation…</div>}
         {msgs.map((m, i) => <Message key={i} m={m} onRetry={(t, mult = 2) => send(t, mult, true)} isLast={i === msgs.length - 1} />)}
         {busy && (
           <div className="col" style={{ gap: 6 }}>
@@ -221,8 +248,21 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   )
 }
 
+/** "Translated · show original" toggle under a message whose stored text was in the other language. */
+function useOriginal(m: Msg) {
+  const [showOrig, setShowOrig] = useState(false)
+  const text = showOrig && m.original ? m.original : m.content
+  const toggle = m.original ? (
+    <button className="tiny muted" style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'inherit' }} onClick={() => setShowOrig((s) => !s)}>
+      <Languages size={11} /> {showOrig ? 'Original · show translation' : 'Translated · show original'}
+    </button>
+  ) : null
+  return { text, toggle }
+}
+
 function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string, mult?: number) => void; isLast: boolean }) {
-  if (m.role === 'user') return <div className="msg user">{m.content}</div>
+  const { text, toggle } = useOriginal(m)
+  if (m.role === 'user') return <div className="col" style={{ gap: 2, alignSelf: 'flex-end', alignItems: 'flex-end', maxWidth: '88%' }}><div className="msg user" style={{ maxWidth: '100%' }}>{text}</div>{toggle}</div>
   const x = m.extra || {}
   return (
     <div className="col" style={{ gap: 6, alignSelf: 'flex-start', maxWidth: '96%' }}>
@@ -234,7 +274,8 @@ function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string, mult?: n
           {x.tool_log.map((t: Json, i: number) => <div key={i} className="tiny" style={{ marginTop: 3 }}>• <b>{t.tool}</b>: {t.summary}</div>)}
         </details>
       )}
-      <div className="msg assistant" dangerouslySetInnerHTML={md(m.content)} />
+      <div className="msg assistant" dangerouslySetInnerHTML={md(text)} />
+      {toggle}
       {x.changes?.length > 0 && (
         <div className="callout good small" style={{ padding: '6px 10px' }}>
           <div><b>Updated:</b> {x.changes.map((c: Json) => `${c.label}: ${short(c.old)} → ${short(c.new)}`).join(' · ')}</div>

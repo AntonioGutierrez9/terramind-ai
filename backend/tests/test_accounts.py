@@ -92,3 +92,30 @@ def test_quote_verification_blocks_invented_values():
     assert verify_quote("precio de compraventa será de $120,000,000.00", 120_000_000, doc)
     assert not verify_quote("precio de compraventa será de $95,000,000.00", 95_000_000, doc)  # not in the document
     assert not verify_quote("precio de compraventa será de $120,000,000.00", 95_000_000, doc)  # number mismatch
+
+
+def test_chat_translation_is_cached_private_and_skips_text_already_in_language():
+    from app import db, store
+    from app.agents.translator import detect
+    assert detect("What is the equity IRR of this project?") == "en"
+    assert detect("¿Cuál es la TIR del capital de este proyecto?") == "es"
+    assert detect("24.9%") is None  # language-neutral: never sent to the model
+    a, b = client(), client()
+    a.post("/api/auth/guest")
+    b.post("/api/auth/guest")
+    pid = a.get("/api/projects").json()[0]["id"]
+    owner = store.project_owner(pid)[1]
+    en_id = store.add_message(pid, "user", "What is the equity IRR of this project?", owner=owner)
+    store.add_message(pid, "assistant", "La TIR del capital es de 24.9% para este proyecto.", owner=owner)
+    with db.tx() as c:  # pretend the English message was translated earlier (cache hit -> no model call)
+        c.execute("INSERT INTO message_translations(message_id, lang, content) VALUES (?,?,?)",
+                  (en_id, "es", "¿Cuál es la TIR del capital de este proyecto?"))
+    r = a.post("/api/chat/translate", json={"project_id": pid}, headers={"X-Lang": "es"}).json()
+    assert [m["content"] for m in r["messages"]] == ["¿Cuál es la TIR del capital de este proyecto?",
+                                                     "La TIR del capital es de 24.9% para este proyecto."]
+    assert r["messages"][0]["original"] == "What is the equity IRR of this project?" and r["messages"][1]["original"] is None
+    assert not r["turn_usage"] or r["turn_usage"]["total"]["requests"] == 0  # nothing needed the model
+    got = a.get(f"/api/chat/messages?project_id={pid}", headers={"X-Lang": "es"}).json()
+    assert got[0]["content"].startswith("¿Cuál") and got[0]["lang"] == "es"
+    assert a.get(f"/api/chat/messages?project_id={pid}", headers={"X-Lang": "en"}).json()[0]["content"].startswith("What")
+    assert b.post("/api/chat/translate", json={"project_id": pid}, headers={"X-Lang": "es"}).status_code == 404

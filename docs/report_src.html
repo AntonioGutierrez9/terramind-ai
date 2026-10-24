@@ -115,7 +115,7 @@
   <li><b>AI that researches but never calculates.</b> Agents find zoning rules, comparables, cost benchmarks and rates <b>with sources</b>. A tested, deterministic Python engine computes every metric.</li>
   <li><b>Investment-grade governance:</b> every value is tagged user / researched / default / demo, with verification and date. Researched values stay <i>pending</i> until approved. Material changes need a confirmation click, overriding a legal limit flags the scenario as noncompliant, and there is a full audit trail with undo.</li>
   <li><b>Reads your documents:</b> upload a zoning certificate, permit, contract or the developer's Excel model. TerraMind extracts the facts, proposes model updates (checked against the file) and reviews contracts for risks. Projects are private to each account, and guests can use it without signing up.</li>
-  <li><b>English or Spanish:</b> one click switches the whole interface (English by default); the agents then answer in Spanish too.</li>
+  <li><b>English or Spanish:</b> one click switches the whole interface (English by default); the agents then answer in Spanish too, and the existing chat conversation is translated.</li>
   <li><b>Mexico-first</b> (CDMX zoning codes, ISAI transfer tax, TIIE, presale payment schedules), with manual fallback anywhere.</li>
   <li><b>Sustainability with the right beneficiary:</b> in build-to-sell, energy savings go to the buyer, so the developer only sees capex and any price premium. In build-to-rent, savings raise NOI and exit value.</li>
 </ol>
@@ -250,7 +250,7 @@
   <tr><td><b>Overspending / runaway loops</b></td><td>Delegation depth 1; per-turn caps on specialists, tool calls, requests, tokens and USD; safe stop plus "Continue with higher limits" (user permission, capped at 4×)</td><td><code>test_specialist_call_limit_stops_the_turn</code>, <code>test_budget_limit_raises_before_spending</code>, live demo (Figure 9)</td></tr>
   <tr><td><b>Executing transactions</b></td><td>No payment, signing or lender tools exist. Status changes are only recorded, after confirmation</td><td>Code review: tool list in <code>docs/AGENTS_AND_TOOLS.md</code></td></tr>
 </table>
-<p><b>Result:</b> <code>pytest</code> → <b>65 passed</b> (37 engine, 17 safety, 7 accounts &amp; documents, 4 Excel export) on the development machine. The fresh-clone dry run passed all 43 tests that existed at the time.</p>
+<p><b>Result:</b> <code>pytest</code> → <b>66 passed</b> (37 engine, 17 safety, 8 accounts, documents &amp; translation, 4 Excel export) on the development machine. The fresh-clone dry run passed all 43 tests that existed at the time.</p>
 
 <h3>6.2 Defenses working (live)</h3>
 <div class="two">
