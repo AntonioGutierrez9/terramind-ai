@@ -6,6 +6,8 @@ AI agents research and propose assumptions with sources, the user approves them,
 
 *Yale SOM · AI Foundations for Managers (MGT 409), Fall 2026 · Final project by Antonio Gutiérrez García*
 
+**▶ Walkthrough video (2:54):** [`output/terramind_demo.mp4`](output/terramind_demo.mp4) (subtitles: [`terramind_demo.srt`](output/terramind_demo.srt)). It was recorded from the real running app with fictional data. The script and shot list are in [`output/demo_script.md`](output/demo_script.md), and what was and wasn't demonstrated is in [`output/demo_checklist.md`](output/demo_checklist.md). The narration uses a synthetic voice.
+
 > All demo projects are **fictional** and use illustrative assumptions. TerraMind is decision support, not investment advice.
 > It never executes investments, payments or financing transactions.
 

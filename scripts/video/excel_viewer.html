@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; font-family: Inter, "Segoe UI", system-ui, sans-serif; }
+  body { background: linear-gradient(135deg, #071226, #0b1a33 50%, #17345e); }
+  .win { position: absolute; left: 110px; top: 70px; width: 1700px; height: 900px; background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,.45); display: flex; flex-direction: column; opacity: 0; transform: translateY(20px) scale(.98);
+    animation: in .7s .1s ease forwards; }
+  @keyframes in { to { opacity: 1; transform: none } }
+  .bar { height: 54px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 22px; background: #f2f6fb; border-bottom: 1px solid #dfe5ee; }
+  .ico { width: 30px; height: 30px; border-radius: 7px; background: #1d6f42; color: #fff; font-weight: 800; font-size: 15px; display: grid; place-items: center; }
+  .fn { font-weight: 650; font-size: 18px; color: #0b1a33; }
+  .note { margin-left: auto; font-size: 15px; color: #5b6b82; }
+  .sheet { position: relative; flex: 1; overflow: hidden; background: #fff; }
+  .sheet img { position: absolute; left: 0; top: 0; width: 1700px; transition: transform 1.6s cubic-bezier(.45,0,.2,1), opacity .35s ease; opacity: 0; }
+  .sheet img.on { opacity: 1; }
+  .tabs { height: 46px; flex-shrink: 0; display: flex; align-items: stretch; gap: 2px; padding: 0 14px; background: #eef1f5; border-top: 1px solid #dfe5ee; }
+  .tab { padding: 0 18px; display: grid; place-items: center; font-size: 15px; color: #42526b; border-bottom: 3px solid transparent; transition: all .3s; }
+  .tab.on { background: #fff; color: #1d6f42; font-weight: 700; border-bottom-color: #1d6f42; }
+</style></head>
+<body>
+<div class="win">
+  <div class="bar"><div class="ico">X</div><div class="fn" id="fn"></div><div class="note">Downloaded from TerraMind · sheets rendered by Microsoft Excel</div></div>
+  <div class="sheet" id="sheet"></div>
+  <div class="tabs" id="tabs"></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('fn').textContent = q.get('fn') || 'TerraMind.xlsx';
+  const TABS = ['Cover', 'Outputs', 'Assumptions', 'Development', 'Construction', 'Sales', 'Rental', 'Cash Flow', 'Waterfall', 'Budget', 'Sensitivity'];
+  const tabs = document.getElementById('tabs');
+  for (const t of TABS) { const d = document.createElement('div'); d.className = 'tab'; d.textContent = t; d.dataset.t = t; tabs.appendChild(d); }
+  // [tab, image, y-start, y-end, x-shift, scale, seconds]
+  const STEPS = JSON.parse(q.get('steps'));
+  const sheet = document.getElementById('sheet');
+  const imgs = STEPS.map(([tab, src]) => { const i = new Image(); i.src = src; sheet.appendChild(i); return i; });
+  let k = 0;
+  function show() {
+    if (k >= STEPS.length) return;
+    const [tab, , y0, y1, x, s, sec] = STEPS[k];
+    imgs.forEach((im, j) => im.classList.toggle('on', j === k));
+    const im = imgs[k];
+    im.style.transition = 'none'; im.style.transformOrigin = '0 0';
+    im.style.transform = `translate(${-x}px, ${-y0}px) scale(${s})`;
+    void im.offsetWidth;
+    im.style.transition = `transform ${Math.max(sec - .3, .5)}s cubic-bezier(.45,0,.2,1), opacity .35s ease`;
+    requestAnimationFrame(() => { im.style.transform = `translate(${-x}px, ${-y1}px) scale(${s})`; });
+    [...tabs.children].forEach((d) => d.classList.toggle('on', d.dataset.t === tab));
+    k += 1;
+    setTimeout(show, sec * 1000);
+  }
+  window.__start = () => setTimeout(show, 500);
+</script>
+</body></html>

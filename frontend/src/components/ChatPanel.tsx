@@ -77,8 +77,8 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
 
   // Keep the whole conversation in the selected interface language: translate (cached per message on the server)
   // whenever the history is loaded, the language is switched, or a new turn finishes.
-  const syncLanguage = async (keepRetry?: string) => {
-    setTranslating(true)
+  const syncLanguage = async (keepRetry?: string, quiet = false) => {
+    if (!quiet) setTranslating(true)
     try {
       const r = await api.post('/api/chat/translate', { project_id: projectId })
       const list: Msg[] = r.messages.map(toMsg)
@@ -136,7 +136,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
       setBusy(false)
       setLive([])
     }
-    if (finished) syncLanguage(message)
+    if (finished) syncLanguage(message, true)  // quiet: usually nothing to translate after a turn
   }
 
   const toggleMic = () => {

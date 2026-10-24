@@ -1,0 +1,171 @@
+1
+00:00:00,400 --> 00:00:03,970
+Before coming to Yale, I worked in real estate investment funds,
+
+2
+00:00:03,970 --> 00:00:08,514
+where I spent a lot of time evaluating development opportunities and building financial models.
+
+3
+00:00:08,514 --> 00:00:09,812
+For my final project,
+
+4
+00:00:09,812 --> 00:00:13,707
+I wanted to create something that could make that process more efficient.
+
+5
+00:00:13,707 --> 00:00:15,330
+That's how TerraMind AI started.
+
+6
+00:00:15,730 --> 00:00:19,476
+TerraMind helps users evaluate different types of real estate investments,
+
+7
+00:00:19,476 --> 00:00:22,473
+from residential developments to commercial and industrial properties.
+
+8
+00:00:22,473 --> 00:00:25,469
+The process starts with the property's basic information,
+
+9
+00:00:25,469 --> 00:00:29,590
+which the platform uses to guide the rest of the analysis.
+
+10
+00:00:30,095 --> 00:00:35,492
+One of the first steps is understanding what can actually be developed on a property.
+
+11
+00:00:35,492 --> 00:00:37,291
+TerraMind can research development regulations,
+
+12
+00:00:37,291 --> 00:00:41,968
+but it also allows users to provide their own information or upload documents,
+
+13
+00:00:41,968 --> 00:00:44,847
+such as permits, contracts, or existing financial models,
+
+14
+00:00:44,847 --> 00:00:48,445
+so the analysis can build on information they already have.
+
+15
+00:00:49,012 --> 00:00:52,854
+The platform then connects development assumptions, construction costs, projected revenues,
+
+16
+00:00:52,854 --> 00:00:55,159
+and financing into a financial model.
+
+17
+00:00:55,159 --> 00:00:58,617
+Instead of asking users to estimate the final returns,
+
+18
+00:00:58,617 --> 00:01:01,307
+TerraMind calculates them from the underlying assumptions.
+
+19
+00:01:01,307 --> 00:01:08,222
+Users can also export the model to Excel to review or continue working on it outside the application.
+
+20
+00:01:10,986 --> 00:01:13,918
+The feature I find most interesting is the chatbot.
+
+21
+00:01:13,918 --> 00:01:15,873
+Instead of navigating through multiple spreadsheets,
+
+22
+00:01:15,873 --> 00:01:19,456
+users can explain what they want to change in natural language.
+
+23
+00:01:19,706 --> 00:01:20,153
+Here,
+
+24
+00:01:20,153 --> 00:01:28,637
+a ten percent increase in construction costs raises the hard cost from 24,000 to 26,400 pesos per square meter,
+
+25
+00:01:28,637 --> 00:01:32,656
+and the equity IRR falls from 24.9% to 21.2%.
+
+26
+00:01:32,906 --> 00:01:36,886
+The assistant can update assumptions, incorporate more complex cash-flow schedules,
+
+27
+00:01:36,886 --> 00:01:40,866
+and help users understand how those changes affect the investment.
+
+28
+00:01:50,432 --> 00:01:53,671
+I also wanted to make the platform easier to use,
+
+29
+00:01:53,671 --> 00:01:57,882
+so I added speech-to-text functionality. Users can dictate instructions instead of typing them.
+
+30
+00:01:57,882 --> 00:02:01,445
+And because I eventually want this to be useful in Mexico,
+
+31
+00:02:01,445 --> 00:02:03,712
+the application supports both English and Spanish.
+
+32
+00:02:04,112 --> 00:02:07,850
+Another important objective was incorporating sustainability into investment decisions.
+
+33
+00:02:07,850 --> 00:02:12,420
+TerraMind can help compare different improvements and evaluate their financial impact.
+
+34
+00:02:12,420 --> 00:02:16,573
+The AI agents can also review the investment, identify risks,
+
+35
+00:02:16,573 --> 00:02:20,312
+and suggest changes that could improve the project's performance.
+
+36
+00:02:20,821 --> 00:02:25,062
+I also wanted TerraMind to be useful beyond the initial investment decision.
+
+37
+00:02:25,062 --> 00:02:30,011
+Users can save projects, return to their analyses, and monitor how investments are performing.
+
+38
+00:02:30,011 --> 00:02:33,545
+The platform supports individual accounts to keep project information separate,
+
+39
+00:02:33,545 --> 00:02:38,141
+as well as guest access for someone who just wants to explore it.
+
+40
+00:02:38,521 --> 00:02:40,095
+TerraMind is still a prototype,
+
+41
+00:02:40,095 --> 00:02:44,816
+but it brings together several parts of real estate investing that are usually handled separately.
+
+42
+00:02:44,816 --> 00:02:49,538
+I see it as a starting point for something I could continue developing after Yale,
+
+43
+00:02:49,538 --> 00:02:53,631
+especially as I pursue my interest in real estate investment and sustainable development.
