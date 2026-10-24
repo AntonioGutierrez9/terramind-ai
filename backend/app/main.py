@@ -170,7 +170,8 @@ def project(pid: int):
 @app.get("/api/projects/{pid}/assumptions")
 def assumptions(pid: int):
     p = store.get_project(pid)
-    return {"rows": services.assumption_table(p), "calculated": services.calculated_rows(services.results(p))}
+    return {"rows": services.assumption_table(p), "calculated": services.calculated_rows(services.results(p)),
+            "custom": services.custom_variable_rows(p)}
 
 
 @app.patch("/api/projects/{pid}/profile")
@@ -323,6 +324,36 @@ def apply_variant(pid: int, vid: int):
         raise HTTPException(404, "configuration not found")
     return store.apply_changes(pid, [{"key": k, "value": val} for k, val in v["payload"].items()], actor="user",
                                reason=f"applied saved configuration '{v['name']}'")
+
+
+@app.get("/api/projects/{pid}/recommendations")
+def recommendations(pid: int):
+    return services.recommendations(store.get_project(pid))
+
+
+@app.post("/api/projects/{pid}/recommendations/apply")
+def apply_recommendation(pid: int, body: dict):
+    rec = services.recommendations(store.get_project(pid))
+    if body.get("package"):
+        changes, label = (rec.get("package") or {}).get("changes"), "recommended package"
+    else:
+        lv = next((x for x in rec.get("levers", []) if x["id"] == body.get("lever_id")), None)
+        changes, label = (lv or {}).get("changes"), (lv or {}).get("title")
+    if not changes:
+        raise HTTPException(404, "Recommendation not found (the project may have changed; refresh).")
+    res = store.apply_changes(pid, changes, actor="user", reason=f"applied recommendation: {label}")
+    return {**res, "results": services.results(store.get_project(pid))}
+
+
+@app.post("/api/projects/{pid}/recommendations/commentary")
+async def recommendation_commentary(pid: int):
+    _need_ai()
+    from .agents.committee import run_advisor
+    from .agents.runtime import TurnContext
+    ctx = TurnContext(project_id=pid, purpose="advisor", limits=limits())
+    p = store.get_project(pid)
+    out = await run_advisor(ctx, p, services.recommendations(p))
+    return {**out, "turn_usage": ctx.summary()}
 
 
 @app.get("/api/projects/{pid}/sustainability")

@@ -36,6 +36,9 @@ There are no cycles. Specialists have no delegation tool, so delegation depth is
 | `set_price_phases(phases[], reason)` | Launch discounts or delivery premiums for contracts signed in a period | yes |
 | `set_land_payments(payments[], reason)` | Land paid in installments (must add to 100%) | yes |
 | `set_custom_cash_flows(flows[], reason)` | Any one-off cost or revenue the standard inputs do not cover | yes |
+| `add_custom_variable(variable, reason)` / `remove_custom_variable(key)` | New user-defined inputs with a deterministic effect (cost per unit / m², % of hard cost or of collections, monthly or one-off cost/income, income per unit sold, price %, or tracked only) | yes |
+| `recommend_improvements()` | Ranked levers tested on the full model, blocking issues first, plus a combined package (`engine/advisor.py`) | no |
+| `apply_recommendation(lever_id)` | Applies a lever or the package (material changes stay pending) | yes |
 | `undo_last_change()` | Reverts the last batch of changes | yes |
 | `request_status_change(status, reason)` | Approve / add to portfolio. **Always pending** | pending only |
 | `create_project(...)` | New project from a natural-language description | yes |

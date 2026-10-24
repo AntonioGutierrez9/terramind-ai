@@ -76,6 +76,7 @@ def summarize_for_llm(project: dict) -> dict:
         "assumptions": filled,
         "unit_mix": a.get("unit_mix"),
         "schedules": {k: a.get(k) for k in ("sales_phases", "price_phases", "land_payments", "custom_flows") if a.get(k)},
+        "custom_variables": [{k: v[k] for k in ("key", "label", "value", "effect", "section")} for v in a.get("custom_variables") or []],
         "sustainability_enabled": [m["key"] for m in a.get("sustainability_measures") or [] if m.get("enabled")],
         "model_status": res.get("status"),
         "missing_inputs": res.get("missing", []),
@@ -126,6 +127,15 @@ def assumption_table(project: dict) -> list[dict]:
     return rows
 
 
+def custom_variable_rows(project: dict) -> list[dict]:
+    from engine.custom_vars import EFFECTS
+    meta = (project["meta"].get("custom_variables") or {})
+    return [{"key": v["key"], "label": v["label"], "section": v["section"], "section_label": SECTIONS[v["section"]] + " (user-defined)",
+             "value": v["value"], "unit": v["unit"], "effect": v["effect"], "effect_label": EFFECTS[v["effect"]][0], "note": v.get("note"),
+             "source": meta.get("source") or v.get("created_by"), "updated_at": meta.get("updated_at"), "updated_by": meta.get("updated_by"),
+             "custom": True} for v in project["assumptions"].get("custom_variables") or []]
+
+
 def calculated_rows(res: dict) -> list[dict]:
     """Outputs shown in the control center as 'calculated' (never editable)."""
     if res.get("status") != "ok":
@@ -151,6 +161,18 @@ def comps_summary(comps: list[dict]) -> dict:
                  "p25": statistics.quantiles(inc, n=4)[0] if len(inc) >= 4 else min(inc),
                  "p75": statistics.quantiles(inc, n=4)[2] if len(inc) >= 4 else max(inc)}
     return {"rows": rows, "stats": stats}
+
+
+@lru_cache(maxsize=32)
+def _cached_reco(profile_json: str, assumptions_json: str, comps_json: str) -> dict:
+    import json
+    from engine.advisor import recommend
+    return recommend(json.loads(profile_json), json.loads(assumptions_json), json.loads(comps_json))
+
+
+def recommendations(project: dict) -> dict:
+    comps = (store.latest_research(project["id"]).get("market") or {}).get("payload", {}).get("summary", {}).get("stats")
+    return _cached_reco(dumps(project["profile"]), dumps(project["assumptions"]), dumps(comps))
 
 
 def asset_analysis(project: dict) -> dict:
@@ -192,6 +214,7 @@ def portfolio(owner: str | None) -> dict:
 
 def clear_caches() -> None:
     _cached_model.cache_clear()
+    _cached_reco.cache_clear()
     _cached_analysis.cache_clear()
 
 

@@ -330,6 +330,97 @@ def set_custom_cash_flows(ctx: RunContext[ManagerDeps], flows: list[CustomFlowIn
     return _apply_schedule(ctx, "custom_flows", flows, reason, "budget")
 
 
+class CustomVariableIn(BaseModel):
+    label: str = Field(description="Name shown on the page, e.g. 'Trust (fideicomiso) fee'")
+    value: float | str = Field(description="Number in the effect's unit (percent as 0.5 = 0.5%); text only for effect 'info'")
+    effect: Literal["cost_fixed", "cost_per_area", "cost_per_unit", "cost_pct_hard", "cost_pct_revenue", "cost_monthly",
+                    "revenue_fixed", "revenue_per_unit", "revenue_monthly", "price_pct", "info"] = Field(
+        description="How the engine uses it: one-off cost, cost per m² GBA, cost per unit, % of hard cost, % of sales collections, "
+                    "monthly cost, one-off income, income per unit sold, monthly income, % change to sale price/rent, or tracked only")
+    section: Literal["site", "reg", "dev", "rev", "rent", "cost", "sch", "fin", "val"] = Field(description="Page/section where it appears")
+    timing: Literal["construction", "anchor"] = Field("construction", description="Costs: spread over construction, or at anchor+offset")
+    anchor: Anchor = "construction_start"
+    offset: int = 0
+    months: int = Field(12, description="Duration for monthly effects")
+    note: str = ""
+
+
+@agent.tool
+def add_custom_variable(ctx: RunContext[ManagerDeps], variable: CustomVariableIn, reason: str) -> dict:
+    """Add a NEW input the standard model doesn't have (e.g. a trust fee as % of sales, a smart-home package per unit,
+    storage-unit income per unit sold, a view premium %). It appears on the chosen page and in the Assumption Center and
+    flows through the model deterministically. Updating a variable with the same label replaces it."""
+    from engine.custom_vars import slug
+    p = _project(ctx)
+    cur = list(p["assumptions"].get("custom_variables") or [])
+    row = {**variable.model_dump(), "key": slug(variable.label), "created_by": "chatbot"}
+    cur = [v for v in cur if v["key"] != row["key"]] + [row]
+    before = services.results(p)
+    res = store.apply_changes(p["id"], [{"key": "custom_variables", "value": cur}], actor="chatbot", reason=reason)
+    after = services.results(store.get_project(p["id"]))
+    ctx.deps.ctx.changes += res["applied"]
+    from engine.custom_vars import SECTION_PAGE
+    _log(ctx, "add_custom_variable", f"{variable.label} ({variable.effect})" + (f", rejected: {res['rejected'][0]['error']}" if res["rejected"] else ""),
+         SECTION_PAGE.get(variable.section, "assumptions"), applied=res["applied"], rejected=res["rejected"])
+    return {"added": row if res["applied"] else None, "rejected": res["rejected"],
+            "effect_on_metrics": [{"metric": e["metric"], "before": _round(e["before"]), "after": _round(e["after"])}
+                                  for e in services.describe_change_effect(before, after)]}
+
+
+@agent.tool
+def remove_custom_variable(ctx: RunContext[ManagerDeps], key_or_label: str, reason: str) -> dict:
+    """Remove a user-defined variable by its key (custom.xxx) or label."""
+    p = _project(ctx)
+    cur = list(p["assumptions"].get("custom_variables") or [])
+    keep = [v for v in cur if v["key"] != key_or_label and v["label"].lower() != key_or_label.lower()]
+    if len(keep) == len(cur):
+        return {"error": "No user-defined variable with that name."}
+    res = store.apply_changes(p["id"], [{"key": "custom_variables", "value": keep}], actor="chatbot", reason=reason)
+    ctx.deps.ctx.changes += res["applied"]
+    _log(ctx, "remove_custom_variable", key_or_label, "assumptions")
+    return {"removed": key_or_label}
+
+
+@agent.tool
+def recommend_improvements(ctx: RunContext[ManagerDeps]) -> dict:
+    """Ranked recommendations to improve the project: blocking issues and levers (land, pricing, sales strategy, cost,
+    schedule, design, financing, sustainability), each tested on the full model with its impact on equity IRR, profit
+    and peak equity, plus a combined package. Use it when the user asks what to change or how to improve the project."""
+    from .committee import slim_recommendations
+    p = _project(ctx)
+    rec = services.recommendations(p)
+    _log(ctx, "recommend_improvements", f"{len(rec.get('levers', []))} levers, {len(rec.get('issues', []))} issues", "advisor")
+    if rec.get("status") != "ok":
+        return rec
+    return slim_recommendations(rec)
+
+
+@agent.tool
+def apply_recommendation(ctx: RunContext[ManagerDeps], lever_id: str, reason: str) -> dict:
+    """Apply one recommended lever by id (or 'package' for the combined package). Ordinary changes apply now; material
+    ones (financing) come back pending for the user's confirmation."""
+    p = _project(ctx)
+    rec = services.recommendations(p)
+    if lever_id == "package":
+        changes = (rec.get("package") or {}).get("changes")
+    else:
+        changes = next((lv["changes"] for lv in rec.get("levers", []) if lv["id"] == lever_id), None)
+    if not changes:
+        return {"error": "Unknown recommendation id; call recommend_improvements again."}
+    before = services.results(p)
+    res = store.apply_changes(p["id"], changes, actor="chatbot", reason=reason or f"recommendation {lever_id}")
+    after = services.results(store.get_project(p["id"]))
+    ctx.deps.ctx.changes += res["applied"]
+    if res["pending_id"]:
+        ctx.deps.ctx.pending_ids.append(res["pending_id"])
+    _log(ctx, "apply_recommendation", f"{lever_id}: applied {len(res['applied'])}, pending {len(res['pending'])}", "advisor",
+         applied=res["applied"], pending=res["pending"], pending_id=res["pending_id"])
+    return {"applied": [{"key": x["key"], "old": x["old"] if not isinstance(x["old"], list) else "list", "new": x["new"] if not isinstance(x["new"], list) else "list"} for x in res["applied"]],
+            "pending_user_confirmation": [x["key"] for x in res["pending"]],
+            "effect_on_metrics": [{"metric": e["metric"], "before": _round(e["before"]), "after": _round(e["after"])}
+                                  for e in services.describe_change_effect(before, after)]}
+
+
 @agent.tool
 def undo_last_change(ctx: RunContext[ManagerDeps]) -> dict:
     """Undo the most recent batch of assumption changes for the open project."""

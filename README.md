@@ -47,7 +47,7 @@ See `.env.example`. **Without a key, the whole financial platform still works.**
 
 ```bash
 python run.py --port 8001 --no-browser       # another port, no browser
-cd backend && python -m pytest -q            # 58 tests: engine math, schedules, safety controls, accounts and data isolation
+cd backend && python -m pytest -q            # 61 tests: engine math, schedules, user variables, advisor, safety controls, accounts and data isolation
 cd frontend && npm install && npm run dev    # frontend dev server on :5173 (proxies /api to :8000)
 cd frontend && npm run build                 # rebuild frontend/dist
 ```
@@ -70,7 +70,8 @@ To start from a clean database, delete `backend/data/terramind.db`. It is re-see
 2. Open **Polanco Residences → Financial Model**: equity IRR, MOIC, NPV, peak equity, monthly cash flows, scenarios, a tornado chart, an IRR heatmap, break-even, and reverse underwriting ("max land price for an 18% equity IRR").
 3. **Property & Zoning**: editable property facts, map, and zoning research by the Regulatory agent (verified vs. preliminary, from parcel level up to citywide rules, with sources). Type the zoning code from your certificate (e.g. `H/4/20/M`) and TerraMind converts it into legal limits deterministically. Also shows development capacity, and noncompliance flags if you override a legal limit.
 4. **Development Config**: unit mix editor, unit-mix optimizer, saved alternative configurations.
-5. **Flexible model**: beyond single numbers, set **sales phases** (e.g. a launch peak and a delivery peak), **price phases** (launch discount, delivery premium), a **land payment schedule**, **custom one-off cash flows** and the **construction spending curve**, in the Market and Budget pages or just by asking the assistant.
+5. **Recommendations**: the advisor tests levers (land, pricing, sales strategy, cost, schedule, design, leverage, sustainability) on the full model, ranks them by computed impact with blocking issues first, and applies any of them in one click; the AI writes an action plan. **New variables**: add your own inputs (e.g. a trust fee as % of sales, storage units sold per apartment) on any page or by chat; each has a defined effect on the model.
+6. **Flexible model**: beyond single numbers, set **sales phases** (e.g. a launch peak and a delivery peak), **price phases** (launch discount, delivery premium), a **land payment schedule**, **custom one-off cash flows** and the **construction spending curve**, in the Market and Budget pages or just by asking the assistant.
 6. **Market / Budget / Financing**: comparables (asking prices labeled as such), revenue forecast, detailed budget, S-curve schedule, capital stack, debt schedule on the actual monthly balance, covenants, equity waterfall.
 6. **Sustainability**: measures with lifecycle NPV, CO₂ and beneficiary-aware developer impact, plus a budget optimizer.
 7. **Investment Committee**: two challenger agents and a chair produce a memo. Every figure comes from the engine, and invented numbers are flagged.

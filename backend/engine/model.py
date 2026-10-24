@@ -20,6 +20,7 @@ from typing import Any
 
 from .finance import annualize, irr_monthly, monthly_rate, nominal_monthly, npv, payment, s_curve
 from .registry import DEFAULT_HARD_COST_SPLIT, REGISTRY, is_ground_up, model_mode
+from .custom_vars import price_multiplier
 from .validation import compliance_issues, missing_inputs
 
 FIN_ITERATIONS = 8
@@ -157,7 +158,7 @@ def _pad(*arrs: list[float], length: int) -> None:
 
 # --------------------------------------------------------------------------- revenue
 def _sale_revenue(a: dict, design: dict, con_start: int, delivery: int) -> dict:  # noqa: C901
-    P = float(a["rev.price_per_area"]) * (1 + green_totals(a)["sale_premium_pct"] / 100)
+    P = float(a["rev.price_per_area"]) * (1 + green_totals(a)["sale_premium_pct"] / 100) * price_multiplier(a, "sale")
     floor_prem = g(a, "rev.floor_view_premium_pct") / 100
     terrace_val = g(a, "rev.terrace_value_pct") / 100
     discount = g(a, "rev.discount_pct") / 100
@@ -236,7 +237,7 @@ def _sale_revenue(a: dict, design: dict, con_start: int, delivery: int) -> dict:
 def _rent_revenue(a: dict, design: dict, delivery: int, ground_up: bool) -> dict:
     leasable = design["saleable"]
     green = green_totals(a)
-    rent = float(a["rent.rent_per_area_month"]) * (1 + green["rent_premium_pct"] / 100)
+    rent = float(a["rent.rent_per_area_month"]) * (1 + green["rent_premium_pct"] / 100) * price_multiplier(a, "rent")
     vac = g(a, "rent.vacancy_pct") / 100
     conc = g(a, "rent.concessions_pct") / 100
     opex_pct = g(a, "rent.opex_pct_egi") / 100
@@ -574,6 +575,76 @@ def equity_waterfall(contrib: list[float], dist: list[float], sponsor_share: flo
     return {"investor": stats(inv), "sponsor": stats(spo), "tiers": tiers, "investor_flows": inv, "sponsor_flows": spo}
 
 
+# --------------------------------------------------------------------------- user-defined variables
+def _apply_custom_vars(a: dict, mode: str, design: dict, costs: dict, rev: dict, cats: dict, marks: dict,
+                       con_start: int, con_months: int, n: int) -> None:
+    """Deterministic effects of user-defined variables (see engine/custom_vars.py). Writes into the custom cost
+    bucket, the revenue inflows and the budget rows."""
+    vars_ = [v for v in a.get("custom_variables") or [] if v["effect"] not in ("info", "price_pct") and isinstance(v.get("value"), (int, float))]
+    if not vars_:
+        return
+    curve = costs.get("curve") or []
+    sales_collections = list(rev["inflows"])  # before user-defined income
+    sold = rev.get("sold") or []
+    units = design.get("units") or 0
+
+    def clamp(t: int) -> int:
+        return max(0, min(int(t), n - 1))
+
+    def spread_construction(total: float) -> None:
+        if con_months and curve:
+            for i, w in enumerate(curve):
+                _add(cats["custom"], clamp(con_start + 1 + i), total * w)
+        else:
+            _add(cats["custom"], clamp(con_start), total)
+
+    for v in vars_:
+        val, eff, label = float(v["value"]), v["effect"], v["label"]
+        start = anchor_month(v.get("anchor"), v.get("offset"), marks)
+        if eff.startswith("cost"):
+            if eff == "cost_fixed":
+                total, basis = val, "fixed"
+            elif eff == "cost_per_area":
+                total, basis = val * (design.get("gba_above") or 0), f"{val:,.0f} × {design.get('gba_above') or 0:,.0f} m² GBA"
+            elif eff == "cost_per_unit":
+                total, basis = val * units, f"{val:,.0f} × {units} units"
+            elif eff == "cost_pct_hard":
+                total, basis = val / 100 * costs.get("hard_base", 0), f"{val:g}% of hard cost"
+            elif eff == "cost_pct_revenue":
+                total = 0.0
+                for t, c in enumerate(sales_collections[:n]):
+                    if c:
+                        _add(cats["custom"], t, c * val / 100)
+                        total += c * val / 100
+                costs["rows"].append({"group": "User-defined variables", "item": label, "amount": total, "basis": f"{val:g}% of sales collections"})
+                continue
+            else:  # cost_monthly
+                months = int(v.get("months") or 12)
+                for i in range(months):
+                    _add(cats["custom"], clamp(start + i), val)
+                costs["rows"].append({"group": "User-defined variables", "item": label, "amount": val * months, "basis": f"{val:,.0f}/month × {months} months"})
+                continue
+            if v.get("timing") == "anchor" and eff == "cost_fixed":
+                _add(cats["custom"], clamp(start), total)
+                basis += f", M{clamp(start)}"
+            else:
+                spread_construction(total)
+            costs["rows"].append({"group": "User-defined variables", "item": label, "amount": total, "basis": basis})
+        else:  # revenue
+            if eff == "revenue_fixed":
+                _add(rev["inflows"], clamp(start), val)
+            elif eff == "revenue_per_unit":
+                if mode == "sale" and sold:
+                    for t, s in enumerate(sold[:n]):
+                        if s:
+                            _add(rev["inflows"], t, s * val)
+                else:
+                    _add(rev["inflows"], clamp(marks.get("sales_start", start)), val * units)
+            else:  # revenue_monthly
+                for i in range(int(v.get("months") or 12)):
+                    _add(rev["inflows"], clamp(start + i), val)
+
+
 # --------------------------------------------------------------------------- main
 def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -> dict:
     a = {**assumptions, **(overrides or {})}
@@ -625,6 +696,7 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
                                   "basis": f"M{cf['resolved_month']} (user-defined)"})
         else:
             _add(rev["inflows"], cf["resolved_month"], float(cf["amount"]))
+    _apply_custom_vars(a, mode, design, costs, rev, cats, sale_marks, con_start, con_months, n)
     _pad(*cats.values(), commercial, rev["inflows"], length=n)
     if mode == "sale":
         _pad(rev["sold"], rev["contract"], length=n)

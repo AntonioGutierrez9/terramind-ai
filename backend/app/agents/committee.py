@@ -59,6 +59,21 @@ class ICMemo(BaseModel):
     required_diligence: list[str] = []
 
 
+class Priority(BaseModel):
+    lever_id: str
+    why: str
+    how_to_execute: str
+    main_risk: str
+
+
+class AdvisorPlan(BaseModel):
+    headline: str
+    priorities: list[Priority]
+    quick_wins: list[str] = []
+    avoid: list[str] = []
+    data_gaps: list[str] = []
+
+
 class AMCommentary(BaseModel):
     headline: str
     drivers: list[str]
@@ -69,6 +84,31 @@ underwriting_challenger = Agent(output_type=ChallengeReport, instructions=SECTIO
 risk_challenger = Agent(output_type=ChallengeReport, instructions=SECTION["Challenger: Capital & Risk"], name="IC Capital & Risk Challenger")
 chair = Agent(output_type=ICMemo, instructions=SECTION["Chair"], name="IC Chair")
 asset_agent = Agent(output_type=AMCommentary, instructions=AM_PROMPT, name="Asset Management")
+advisor_agent = Agent(output_type=AdvisorPlan, instructions=(PROMPTS / "advisor.md").read_text(encoding="utf-8"), name="Improvement Advisor")
+
+
+def slim_recommendations(rec: dict) -> dict:
+    def pct(x):
+        return None if x is None else round(x * 100, 2)
+    return {"base": {"equity_irr_pct": pct(rec["base"]["equity_irr"]), "profit": round(rec["base"]["profit"]), "npv": round(rec["base"]["npv"]),
+                     "peak_equity": round(rec["base"]["peak_equity"])},
+            "issues": [i["detail"] for i in rec.get("issues", [])],
+            "levers": [{"id": lv["id"], "title": lv["title"], "category": lv["category"], "risk": lv["risk"], "note": lv["note"],
+                        "fixes": lv["fixes"], "delta_equity_irr_pts": pct(lv["delta"]["equity_irr"]), "delta_profit": round(lv["delta"]["profit"] or 0),
+                        "delta_peak_equity": round(lv["delta"]["peak_equity"] or 0), "remaining_issues": lv.get("remaining_issues", [])}
+                       for lv in rec.get("levers", [])],
+            "package": rec.get("package") and {"lever_ids": rec["package"]["lever_ids"], "delta_equity_irr_pts": pct(rec["package"]["delta"]["equity_irr"]),
+                                               "delta_profit": round(rec["package"]["delta"]["profit"] or 0)}}
+
+
+async def run_advisor(ctx: TurnContext, project: dict, rec: dict) -> dict:
+    if rec.get("status") != "ok":
+        return {"headline": "Complete the model first.", "priorities": [], "quick_wins": [], "avoid": [], "data_gaps": [i["detail"] for i in rec.get("issues", [])]}
+    ctx.check_budget(extra_usd=0.004)
+    t0 = time.perf_counter()
+    r = await advisor_agent.run(json.dumps(slim_recommendations(rec), default=str), model=build_model(), model_settings=SETTINGS)
+    ctx.record("Improvement Advisor", r.usage, time.perf_counter() - t0, purpose="advisor")
+    return r.output.model_dump()
 
 
 def _pct(x):

@@ -3,6 +3,7 @@ import Layout, { ProjectLayout } from './components/Layout'
 import { AppProviders } from './state'
 import { AuthGate } from './auth'
 import Documents from './pages/project/Documents'
+import Advisor from './pages/project/Advisor'
 import Portfolio from './pages/Portfolio'
 import NewProject from './pages/NewProject'
 import Usage from './pages/Usage'
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="sustainability" element={<Sustainability />} />
               <Route path="committee" element={<Committee />} />
               <Route path="asset" element={<Asset />} />
+              <Route path="advisor" element={<Advisor />} />
               <Route path="documents" element={<Documents />} />
               <Route path="assumptions" element={<Assumptions />} />
               <Route path="history" element={<History />} />

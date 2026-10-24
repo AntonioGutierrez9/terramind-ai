@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import {
   Banknote, BarChart3, Bot, Building2, ClipboardCheck, Coins, Gauge, History, Landmark, LayoutDashboard, Leaf, ListChecks,
-  FileText, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
+  FileText, Lightbulb, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
 } from 'lucide-react'
 import { Welcome, useAuth } from '../auth'
 import { api, notifyProjectChanged, onProjectChanged, type Json } from '../api'
 import { useHealth, useProjectData, type ProjectData } from '../state'
 import ChatPanel from './ChatPanel'
+import CustomVariables from './CustomVariables'
 import { StatusBadge } from './ui'
 
 export const PROJECT_PAGES = [
@@ -21,6 +22,7 @@ export const PROJECT_PAGES = [
   { path: 'sustainability', label: 'Sustainability', icon: Leaf, step: 7 },
   { path: 'committee', label: 'Investment Committee', icon: ClipboardCheck, step: 8 },
   { path: 'asset', label: 'Asset Management', icon: Coins, step: 9 },
+  { path: 'advisor', label: 'Recommendations', icon: Lightbulb },
   { path: 'documents', label: 'Documents & Files', icon: FileText },
   { path: 'assumptions', label: 'Assumption Center', icon: ListChecks },
   { path: 'history', label: 'Audit Trail', icon: History },
@@ -133,9 +135,24 @@ function UndoButton({ pid }: { pid: number }) {
 export function ProjectLayout() {
   const { pid } = useParams()
   const { data, error, reload } = useProjectData(Number(pid))
+  const routeLoc = useLocation()
   if (error) return <div className="callout bad">{error}</div>
   if (!data) return <div className="empty"><span className="spinner" /></div>
-  return <Outlet context={{ data, reload }} />
+  const page = routeLoc.pathname.split('/')[3] || 'model'
+  const sections = PAGE_SECTIONS[page]
+  return (
+    <>
+      <Outlet context={{ data, reload }} />
+      {sections && <CustomVariables data={data} sections={sections === 'mode' ? (data.mode === 'sale' ? ['rev'] : ['rent']) : sections}
+        defaultSection={sections === 'mode' ? (data.mode === 'sale' ? 'rev' : 'rent') : sections[0]} />}
+    </>
+  )
+}
+
+// which user-defined variables appear at the bottom of each page
+const PAGE_SECTIONS: Record<string, string[] | 'mode'> = {
+  property: ['site', 'reg'], design: ['dev'], market: 'mode', budget: ['cost', 'sch'], financing: ['fin'], model: ['val'],
+  assumptions: ['site', 'reg', 'dev', 'rev', 'rent', 'cost', 'sch', 'fin', 'val'],
 }
 
 export { Banknote }

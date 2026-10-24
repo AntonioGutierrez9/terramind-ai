@@ -21,6 +21,8 @@
 | Accounts & guests | Sign up / sign in (PBKDF2-SHA256, signed HttpOnly cookie, same as HW4), private guest workspaces, guest → account migration, per-owner isolation of projects, chats, files and limits | `tests/test_accounts.py` (7 tests) |
 | Documents | Upload PDF (incl. scans), XLSX, DOCX, CSV, TXT, images; deterministic extraction; Document agent (facts, permit, contract review, Excel model comparison, value proposals with verified quotes); Q&A with quote checks; chat 📎 attachment; injection warning | `docs/evidence/document_tests.json`, `test_quote_verification_blocks_invented_values` |
 | Flexible model inputs | Sales phases, price phases, land installments, custom cash flows, construction curve; editors on Market/Budget; chat tools + what-if | 6 engine tests, `docs/evidence/schedule_tests.json` |
+| User-defined variables | Add new inputs on any page or by chat; 10 deterministic effect types; shown per page and in the Assumption Center | 2 engine tests, `docs/evidence/advisor_tests.json` |
+| Recommendations | Advisor tests levers on the full model, ranks by impact, flags fixes, combined package, one-click apply, AI action plan | `test_advisor_levers_are_computed_on_the_model_and_fixes_come_first` |
 | Deliverables | README, `.env.example`, public repo, report.html (14 printed pages), slides.html (9 slides, reveal.js), fresh-clone dry run (47 s, 43 tests pass) | repo |
 
 ## Partially implemented (simpler working version, documented)

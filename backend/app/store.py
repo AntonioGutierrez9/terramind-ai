@@ -23,7 +23,8 @@ from .db import dumps, loads, now, query, query_one, tx
 LOOSER_IF_HIGHER = {"reg.max_stories", "reg.max_far", "reg.max_height_m", "reg.max_units",
                     "reg.max_underground_levels", "reg.parking_max_per_unit"}
 LOOSER_IF_LOWER = {"reg.min_open_area_pct", "reg.min_land_per_unit", "reg.parking_min_per_unit"}
-LIST_KEYS = {"unit_mix", "sustainability_measures", "hard_cost_split", "sales_phases", "price_phases", "land_payments", "custom_flows"}
+LIST_KEYS = {"unit_mix", "sustainability_measures", "hard_cost_split", "sales_phases", "price_phases", "land_payments", "custom_flows",
+             "custom_variables"}
 HUMAN_ACTORS = {"user"}
 
 
@@ -151,6 +152,9 @@ def _validate_list(key: str, value: Any):
             row["enabled"] = bool(row.get("enabled"))
             clean.append(row)
         return clean
+    if key == "custom_variables":
+        from engine.custom_vars import validate_custom_vars
+        return validate_custom_vars(value)
     if key in ("sales_phases", "price_phases", "land_payments", "custom_flows"):
         from engine.schedules import validate_schedule
         return validate_schedule(key, value)

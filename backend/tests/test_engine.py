@@ -314,3 +314,44 @@ def test_schedule_validation():
     with pytest.raises(ValidationError):
         validate_schedule("sales_phases", [{"anchor": "someday", "months": 3, "units_per_month": 5}])
     assert validate_schedule("sales_phases", [])==[]
+
+
+# ---------------------------------------------------------------- user-defined variables
+def test_custom_variables_flow_through_the_model():
+    from engine.custom_vars import validate_custom_vars
+    cv = validate_custom_vars([
+        {"label": "Trust fee", "effect": "cost_pct_revenue", "value": 0.5, "section": "cost"},
+        {"label": "Smart-home package", "effect": "cost_per_unit", "value": 80_000, "section": "cost"},
+        {"label": "Storage units", "effect": "revenue_per_unit", "value": 150_000, "section": "rev"},
+        {"label": "Permit consultant", "effect": "info", "value": "Firm X", "section": "site"},
+    ])
+    base = run(POLANCO)["metrics"]
+    r = run(POLANCO, custom_variables=cv)
+    m = r["metrics"]
+    smart = next(b for b in r["budget"] if b["item"] == "Smart-home package")
+    assert smart["amount"] == pytest.approx(80_000 * m["units"])
+    assert m["revenue"] == pytest.approx(base["revenue"] + 150_000 * m["units"], rel=1e-9)
+    assert sum(b["amount"] for b in r["budget"]) == pytest.approx(m["total_cost"], rel=1e-9)
+    assert m["equity_distributed"] - m["equity_contributed"] == pytest.approx(m["profit"], rel=1e-6)
+
+
+def test_custom_variable_price_pct_and_validation():
+    from engine.custom_vars import validate_custom_vars
+    up = run(POLANCO, custom_variables=validate_custom_vars([{"label": "View premium", "effect": "price_pct", "value": 3, "section": "rev"}]))
+    assert up["metrics"]["gdv"] > run(POLANCO)["metrics"]["gdv"]
+    with pytest.raises(ValidationError):
+        validate_custom_vars([{"label": "Bad", "effect": "run_python", "value": 1}])
+    with pytest.raises(ValidationError):
+        validate_custom_vars([{"label": "Neg", "effect": "cost_fixed", "value": -5}])
+
+
+# ---------------------------------------------------------------- advisor
+def test_advisor_levers_are_computed_on_the_model_and_fixes_come_first():
+    from engine.advisor import recommend
+    rec = recommend(DELVALLE["profile"], deepcopy(DELVALLE["assumptions"]))
+    assert rec["status"] == "ok" and rec["issues"]
+    assert rec["levers"][0]["fixes"]  # covenant-fixing levers are ranked first
+    for lv in rec["levers"]:
+        r = run_model(DELVALLE["profile"], deepcopy(DELVALLE["assumptions"]), {c["key"]: c["value"] for c in lv["changes"]})
+        assert r["metrics"]["equity_irr"] == pytest.approx(lv["after"]["equity_irr"])
+    assert rec["package"] and len(rec["package"]["lever_ids"]) >= 2
