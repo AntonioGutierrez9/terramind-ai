@@ -119,6 +119,8 @@ REGISTRY: dict[str, dict[str, Any]] = {
     "cost.pm_supervision_pct": _v("Project management & supervision", "cost", "% of hard", min=0, max=15, typical=(2, 6), suggested=3.5),
     "cost.insurance_other_pct": _v("Insurance, consultants & other soft", "cost", "% of hard", min=0, max=10, suggested=1.5),
     "cost.contingency_pct": _v("Contingency", "cost", "% of hard + soft", min=0, max=30, typical=(3, 10), suggested=5),
+    "cost.curve": _v("Construction spending curve", "cost", "", "choice", choices=["s_curve", "linear", "front_loaded", "back_loaded"],
+                     suggested="s_curve", help="How hard costs are spread over the construction months."),
     "cost.escalation_pct": _v("Annual construction cost escalation", "cost", "%", min=-10, max=40, typical=(3, 8), suggested=5),
     "cost.developer_fee_pct": _v("Developer fee", "cost", "% of hard + soft", min=0, max=10, suggested=3),
 
@@ -165,6 +167,15 @@ DEFAULT_HARD_COST_SPLIT = {
     "Amenities": 4.0,
     "Landscaping & exterior": 2.0,
     "Infrastructure & connections": 5.0,
+}
+
+# Time-varying inputs (lists). Anchors: closing (t=0), sales_start, construction_start, delivery; offset in months.
+ANCHORS = ["closing", "sales_start", "construction_start", "delivery"]
+SCHEDULE_KEYS = {
+    "sales_phases": "Sales phases: periods with their own sales pace (units/month), e.g. a launch peak and a delivery peak",
+    "price_phases": "Price phases: % price changes for contracts signed in a period, e.g. -8% launch discount, +5% at delivery",
+    "land_payments": "Land payment schedule: % of the land price paid in given months (must add to 100%)",
+    "custom_flows": "Custom one-off cash flows: any extra cost or revenue in a given month (fees, sale of a commercial unit, subsidy...)",
 }
 
 UNIT_TYPE_FIELDS = {

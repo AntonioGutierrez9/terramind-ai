@@ -30,15 +30,25 @@ function md(text: string) {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const inline = (s: string) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>')
   const lines = text.split('\n')
-  let html = '', inList = false
+  let html = '', inList = false, table: string[][] = []
+  const flushTable = () => {
+    if (!table.length) return
+    const rows = table.filter((r) => !r.every((c) => /^\s*:?-{2,}:?\s*$/.test(c)))
+    html += '<table class="t" style="margin:6px 0;font-size:12px"><thead><tr>' + rows[0].map((c) => `<th>${inline(c.trim())}</th>`).join('') + '</tr></thead><tbody>'
+      + rows.slice(1).map((r) => '<tr>' + r.map((c) => `<td>${inline(c.trim())}</td>`).join('') + '</tr>').join('') + '</tbody></table>'
+    table = []
+  }
   for (const raw of lines) {
     const l = raw.trimEnd()
+    if (/^\s*\|.*\|\s*$/.test(l)) { if (inList) { html += '</ul>'; inList = false } table.push(l.trim().slice(1, -1).split('|')); continue }
+    flushTable()
     const m = l.match(/^\s*(?:[-*•]|\d+\.)\s+(.*)/)
     if (m) { if (!inList) { html += '<ul>'; inList = true } html += `<li>${inline(m[1])}</li>`; continue }
     if (inList) { html += '</ul>'; inList = false }
     if (l.trim()) html += `<p>${inline(l)}</p>`
   }
   if (inList) html += '</ul>'
+  flushTable()
   return { __html: html }
 }
 

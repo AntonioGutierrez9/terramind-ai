@@ -20,13 +20,14 @@
 | Token efficiency | Limits (specialists, tool calls, requests, tokens, USD), safe stop + continue with permission, research cache, ledger, Usage page with projections | `test_specialist_call_limit_stops_the_turn`, live limit demo |
 | Accounts & guests | Sign up / sign in (PBKDF2-SHA256, signed HttpOnly cookie, same as HW4), private guest workspaces, guest → account migration, per-owner isolation of projects, chats, files and limits | `tests/test_accounts.py` (7 tests) |
 | Documents | Upload PDF (incl. scans), XLSX, DOCX, CSV, TXT, images; deterministic extraction; Document agent (facts, permit, contract review, Excel model comparison, value proposals with verified quotes); Q&A with quote checks; chat 📎 attachment; injection warning | `docs/evidence/document_tests.json`, `test_quote_verification_blocks_invented_values` |
+| Flexible model inputs | Sales phases, price phases, land installments, custom cash flows, construction curve; editors on Market/Budget; chat tools + what-if | 6 engine tests, `docs/evidence/schedule_tests.json` |
 | Deliverables | README, `.env.example`, public repo, report.html (14 printed pages), slides.html (9 slides, reveal.js), fresh-clone dry run (47 s, 43 tests pass) | repo |
 
 ## Partially implemented (simpler working version, documented)
 
 * Commercial / industrial / mixed-use: shared area-based rent model; industrial and commercial physical attributes are captured as information; mixed-use models the primary component.
 * Waterfall: one hurdle (no multi-tier IRR hurdles or catch-up).
-* Absorption: one total pace (the optimizer holds it constant across mixes).
+* Absorption: base pace plus user-defined sales phases (the unit-mix optimizer holds the pace constant across mixes).
 * Lender comparison: the Financing agent lists public lender programs; no lender quotes (by design).
 
 ## Not done / needs the user

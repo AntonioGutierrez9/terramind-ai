@@ -2,12 +2,13 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { applyChanges, type Json } from '../../api'
 import { useProject } from '../../components/Layout'
+import ScheduleEditor from '../../components/ScheduleEditor'
 import { Callout, Card, ChartTip, FieldGroup, Kpi, Legend, ModelIncomplete, PageHead } from '../../components/ui'
 import { ResearchButton, ResearchMeta, SourceLink, VerifBadge, axisProps, gridProps, mTick, useResearch } from '../../components/b/common'
 import { SERIES, money, num, pctNum } from '../../format'
 import { useMeta } from '../../state'
 
-const COST_KEYS = ['cost.hard_per_area', 'cost.below_grade_per_area', 'cost.demolition', 'cost.infrastructure_fees', 'cost.renovation_budget',
+const COST_KEYS = ['cost.curve', 'cost.hard_per_area', 'cost.below_grade_per_area', 'cost.demolition', 'cost.infrastructure_fees', 'cost.renovation_budget',
   'cost.design_pct', 'cost.permits_pct', 'cost.pm_supervision_pct', 'cost.insurance_other_pct', 'cost.contingency_pct',
   'cost.escalation_pct', 'cost.developer_fee_pct']
 const SCH_KEYS = ['sch.predev_months', 'sch.construction_months']
@@ -54,6 +55,10 @@ export default function Budget() {
           <FieldGroup data={data} keys={SCH_KEYS} title="Schedule" sub="Month 0 = land closing; construction follows pre-development" cols={1} />
           <HardSplit />
         </div>
+      </div>
+      <div className="grid g2" style={{ marginTop: 16 }}>
+        <ScheduleEditor pid={p.id} k="custom_flows" rows={p.assumptions.custom_flows} />
+        <ScheduleEditor pid={p.id} k="land_payments" rows={p.assumptions.land_payments} />
       </div>
       <CostResearch pid={p.id} research={research.data?.cost} reload={research.reload} />
     </div>

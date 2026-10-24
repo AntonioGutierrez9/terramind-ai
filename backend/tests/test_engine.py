@@ -255,3 +255,62 @@ def test_zoning_code_parser():
     assert parse_cdmx_code("HC-3-20-B", land_area=275)["max_units"] == 3  # 2.75 rounds up
     with pytest.raises(ZoningCodeError):
         parse_cdmx_code("residential six floors")
+
+
+# ---------------------------------------------------------------- time-varying inputs (schedules)
+TWO_PEAKS = [
+    {"name": "Launch", "anchor": "construction_start", "offset": 0, "months": 3, "units_per_month": 10},
+    {"name": "Delivery", "anchor": "delivery", "offset": 0, "months": 4, "units_per_month": 8},
+]
+
+
+def test_sales_phases_create_launch_and_delivery_peaks():
+    base_abs = POLANCO["assumptions"]["rev.absorption_per_month"]
+    r = run(POLANCO, **{"sales_phases": TWO_PEAKS, "rev.absorption_per_month": 1.5})
+    sold = [m["units_sold"] or 0 for m in r["months"]]
+    cs, dv = r["schedule"]["construction_start"], r["schedule"]["delivery_month"]
+    cancel = POLANCO["assumptions"]["rev.cancellation_pct"] / 100
+    assert sold[cs + 1] == pytest.approx(10 * (1 - cancel))      # launch peak
+    assert sold[cs + 5] == pytest.approx(1.5 * (1 - cancel))     # slow pace between peaks
+    assert sold[dv] == pytest.approx(8 * (1 - cancel))           # delivery peak
+    assert sum(sold) == pytest.approx(r["metrics"]["units"])     # every unit sold exactly once
+    assert base_abs != 1.5
+
+
+def test_price_phase_discount_lowers_gdv():
+    base = run(POLANCO)["metrics"]["gdv"]
+    disc = run(POLANCO, **{"price_phases": [{"name": "Launch discount", "anchor": "sales_start", "offset": 0, "months": 6, "pct": -8}]})["metrics"]["gdv"]
+    assert disc < base
+
+
+def test_land_payment_schedule_moves_cash_out_later():
+    base = run(POLANCO)
+    split = run(POLANCO, **{"land_payments": [{"month": 0, "pct": 30}, {"month": 6, "pct": 70}]})
+    land = POLANCO["assumptions"]["site.land_price"]
+    assert split["months"][6]["land_acq"] == pytest.approx(0.7 * land)
+    assert split["metrics"]["equity_irr"] > base["metrics"]["equity_irr"]  # paying later helps returns
+
+
+def test_custom_flows_enter_budget_and_cash_flow():
+    r = run(POLANCO, **{"custom_flows": [{"label": "Neighborhood mitigation works", "type": "cost", "amount": 5_000_000, "month": 10},
+                                         {"label": "Sale of retail unit", "type": "revenue", "amount": 12_000_000, "anchor": "delivery", "offset": 2}]})
+    m = r["metrics"]
+    assert any(b["item"] == "Neighborhood mitigation works" for b in r["budget"])
+    assert sum(b["amount"] for b in r["budget"]) == pytest.approx(m["total_cost"], rel=1e-9)
+    assert m["equity_distributed"] - m["equity_contributed"] == pytest.approx(m["profit"], rel=1e-6)
+
+
+def test_cost_curve_changes_timing_not_total():
+    s = run(POLANCO)["metrics"]
+    f = run(POLANCO, **{"cost.curve": "front_loaded"})["metrics"]
+    assert f["hard_cost"] < s["hard_cost"] + 1  # front-loading spends earlier, so less escalation
+    assert f["equity_irr"] != s["equity_irr"]
+
+
+def test_schedule_validation():
+    from engine.schedules import validate_schedule
+    with pytest.raises(ValidationError):
+        validate_schedule("land_payments", [{"month": 0, "pct": 50}])
+    with pytest.raises(ValidationError):
+        validate_schedule("sales_phases", [{"anchor": "someday", "months": 3, "units_per_month": 5}])
+    assert validate_schedule("sales_phases", [])==[]

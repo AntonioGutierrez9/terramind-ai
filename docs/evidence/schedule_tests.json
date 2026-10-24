@@ -1,0 +1,167 @@
+[
+  {
+    "message": "Why don't you assume a big selling point at the start of construction and then also a big selling point at the end of construction? I don't think selling 3 units per month the whole time is realistic.",
+    "answer": "I’ve replaced the flat 3-units-per-month assumption with two sales peaks and a slower interim pace:\n\n- **Construction start:** 8 units/month for 3 months\n- **Between peaks:** 1.5 units/month for 18 months\n- **Near delivery:** 8 units/month for 3 months\n\nThese are provisional assumptions. The model now shows **sellout by month 31**. Compared with the prior case, **equity IRR increased from 24.91% to 25.02%**, while **profit decreased from MXN 281.2m to MXN 278.8m** and **GDV decreased from MXN 1,036.5m to MXN 1,034.9m**.\n\nNext step: review the revised sales timing on the **Model** page and adjust the phase pace or duration if you have launch-specific sales expectations.",
+    "tools": [
+      "describe_variables: 13 variables",
+      "set_sales_phases: 3 row(s)"
+    ],
+    "usage": {
+      "requests": 3,
+      "input_tokens": 15437,
+      "cached_tokens": 9860,
+      "output_tokens": 338,
+      "web_searches": 0,
+      "cost_usd": 0.0008253000000000001
+    },
+    "sales_phases": [
+      {
+        "name": "Construction launch",
+        "anchor": "construction_start",
+        "offset": 0,
+        "months": 3,
+        "units_per_month": 8.0
+      },
+      {
+        "name": "Between launch peaks",
+        "anchor": "construction_start",
+        "offset": 3,
+        "months": 18,
+        "units_per_month": 1.5
+      },
+      {
+        "name": "Delivery push",
+        "anchor": "delivery",
+        "offset": -3,
+        "months": 3,
+        "units_per_month": 8.0
+      }
+    ],
+    "land_payments": null,
+    "custom_flows": null,
+    "price_phases": null,
+    "base_absorption": 3.0,
+    "equity_irr": 0.25018725923325635
+  },
+  {
+    "message": "Also assume we pay the land 30% at closing and 70% six months later, and add a MXN 4 million road-mitigation fee at construction start.",
+    "answer": "Both changes are applied:\n\n- **Land payments:** 30% at closing and 70% six months later.\n- **Road-mitigation fee:** MXN 4 million at construction start.\n\nAfter both changes, **equity IRR is 27.65%** (up from 25.02%), **profit is MXN 274.6 million** (down from MXN 278.8 million), and **NPV is MXN 128.4 million** (up from MXN 121.9 million). The installment timing improves returns, while the mitigation fee reduces profit.\n\nNext step: review the updated cash-flow timing and cost on the **Model** and **Budget** pages.",
+    "tools": [
+      "set_land_payments: 2 row(s)",
+      "set_custom_flows: 1 row(s)"
+    ],
+    "usage": {
+      "requests": 2,
+      "input_tokens": 10682,
+      "cached_tokens": 8206,
+      "output_tokens": 287,
+      "web_searches": 0,
+      "cost_usd": 0.00047316000000000003
+    },
+    "sales_phases": [
+      {
+        "name": "Construction launch",
+        "anchor": "construction_start",
+        "offset": 0,
+        "months": 3,
+        "units_per_month": 8.0
+      },
+      {
+        "name": "Between launch peaks",
+        "anchor": "construction_start",
+        "offset": 3,
+        "months": 18,
+        "units_per_month": 1.5
+      },
+      {
+        "name": "Delivery push",
+        "anchor": "delivery",
+        "offset": -3,
+        "months": 3,
+        "units_per_month": 8.0
+      }
+    ],
+    "land_payments": [
+      {
+        "month": 0,
+        "pct": 30.0
+      },
+      {
+        "month": 6,
+        "pct": 70.0
+      }
+    ],
+    "custom_flows": [
+      {
+        "label": "Road-mitigation fee",
+        "type": "cost",
+        "amount": 4000000.0,
+        "anchor": "construction_start",
+        "offset": 0
+      }
+    ],
+    "price_phases": null,
+    "base_absorption": 3.0,
+    "equity_irr": 0.2764771172227374
+  },
+  {
+    "message": "What if we gave an 8% launch discount during the first 4 months of sales? Don't save it, just show me.",
+    "answer": "The **8% discount for the first 4 months of sales** is modeled as a temporary scenario only; nothing was saved.\n\n| Metric | Current case | With discount |\n|---|---:|---:|\n| GDV | MXN 1,034.9m | MXN 1,017.8m |\n| Profit | MXN 274.6m | MXN 258.0m |\n| Equity IRR | 27.65% | 26.12% |\n| NPV | MXN 128.4m | MXN 115.9m |\n\nThe scenario reduces equity IRR by **1.53 percentage points** and profit by **MXN 16.6m**. No covenant breaches or model warnings were reported. You can review the scenario on the **Model** page.",
+    "tools": [
+      "what_if: price_phases"
+    ],
+    "usage": {
+      "requests": 2,
+      "input_tokens": 10949,
+      "cached_tokens": 8466,
+      "output_tokens": 219,
+      "web_searches": 0,
+      "cost_usd": 0.00044246000000000004
+    },
+    "sales_phases": [
+      {
+        "name": "Construction launch",
+        "anchor": "construction_start",
+        "offset": 0,
+        "months": 3,
+        "units_per_month": 8.0
+      },
+      {
+        "name": "Between launch peaks",
+        "anchor": "construction_start",
+        "offset": 3,
+        "months": 18,
+        "units_per_month": 1.5
+      },
+      {
+        "name": "Delivery push",
+        "anchor": "delivery",
+        "offset": -3,
+        "months": 3,
+        "units_per_month": 8.0
+      }
+    ],
+    "land_payments": [
+      {
+        "month": 0,
+        "pct": 30.0
+      },
+      {
+        "month": 6,
+        "pct": 70.0
+      }
+    ],
+    "custom_flows": [
+      {
+        "label": "Road-mitigation fee",
+        "type": "cost",
+        "amount": 4000000.0,
+        "anchor": "construction_start",
+        "offset": 0
+      }
+    ],
+    "price_phases": null,
+    "base_absorption": 3.0,
+    "equity_irr": 0.2764771172227374
+  }
+]

@@ -105,6 +105,33 @@ def green_totals(a: dict) -> dict:
     }
 
 
+# --------------------------------------------------------------------------- schedules
+def anchor_month(anchor: str | None, offset: float | int | None, marks: dict) -> int:
+    """Resolve a schedule anchor (closing / sales_start / construction_start / delivery) plus an offset to a month index."""
+    base = marks.get(anchor or "closing", 0)
+    return max(0, int(round(base + (offset or 0))))
+
+
+def _phase_value(phases: list[dict], t: int, marks: dict, field: str):
+    for ph in phases:
+        s = anchor_month(ph.get("anchor"), ph.get("offset"), marks)
+        if s <= t < s + int(ph.get("months") or 0):
+            return ph.get(field)
+    return None
+
+
+def curve_weights(kind: str, n: int) -> list[float]:
+    if n <= 0:
+        return []
+    if kind == "linear":
+        return [1 / n] * n
+    if kind in ("front_loaded", "back_loaded"):
+        raw = [(n - i) for i in range(n)] if kind == "front_loaded" else [(i + 1) for i in range(n)]
+        tot = sum(raw)
+        return [r / tot for r in raw]
+    return s_curve(n)
+
+
 # --------------------------------------------------------------------------- helpers
 def _add(arr: list[float], t: int, value: float) -> None:
     if t >= len(arr):
@@ -129,7 +156,7 @@ def _pad(*arrs: list[float], length: int) -> None:
 
 
 # --------------------------------------------------------------------------- revenue
-def _sale_revenue(a: dict, design: dict, con_start: int, delivery: int) -> dict:
+def _sale_revenue(a: dict, design: dict, con_start: int, delivery: int) -> dict:  # noqa: C901
     P = float(a["rev.price_per_area"]) * (1 + green_totals(a)["sale_premium_pct"] / 100)
     floor_prem = g(a, "rev.floor_view_premium_pct") / 100
     terrace_val = g(a, "rev.terrace_value_pct") / 100
@@ -149,17 +176,35 @@ def _sale_revenue(a: dict, design: dict, con_start: int, delivery: int) -> dict:
         gross_value += unit_price * t["units"]
     avg_price = gross_value / units_total if units_total else 0.0
 
-    net_abs = float(a["rev.absorption_per_month"]) * (1 - cancel)
+    base_abs = float(a["rev.absorption_per_month"])
+    net_abs = base_abs * (1 - cancel)
     start = max(1, con_start + int(g(a, "rev.sales_start_offset", 0)))
+    marks = {"closing": 0, "sales_start": start, "construction_start": con_start, "delivery": delivery}
+    phases = a.get("sales_phases") or []
+    price_phases = a.get("price_phases") or []
+    if phases:  # a phase may open sales earlier than the base presale start
+        first = min(anchor_month(p.get("anchor"), p.get("offset"), marks) for p in phases)
+        start = max(1, min(start, first))
     sold_by_month: list[float] = []
     contract: list[float] = []
     collections: list[float] = []
     commissions: list[float] = []
     remaining, t = float(units_total), start
     while remaining > 1e-9 and net_abs > 0:
-        n = min(net_abs, remaining)
+        rate = _phase_value(phases, t, marks, "units_per_month") if phases else None
+        n = min((base_abs if rate is None else float(rate)) * (1 - cancel), remaining)
+        if n <= 1e-12:
+            t += 1
+            if t > 2000:
+                break
+            continue
         remaining -= n
-        value = n * avg_price * (1 + esc) ** (t / 12) * (1 - discount)
+        price_mult = 1.0
+        for ph in price_phases:
+            s = anchor_month(ph.get("anchor"), ph.get("offset"), marks)
+            if s <= t < s + int(ph.get("months") or 0):
+                price_mult *= 1 + float(ph.get("pct") or 0) / 100
+        value = n * avg_price * (1 + esc) ** (t / 12) * (1 - discount) * price_mult
         _add(sold_by_month, t, n)
         _add(contract, t, value)
         _add(commissions, t, value * comm)
@@ -249,8 +294,15 @@ def _costs(profile: dict, a: dict, design: dict, predev: int, con_months: int, g
     def row(group, item, amount, basis):
         budget_rows.append({"group": group, "item": item, "amount": amount, "basis": basis})
 
-    _add(cats["land"], 0, land_price)
-    row("Acquisition", "Land / property price", land_price, "fixed")
+    land_sched = a.get("land_payments") or []
+    if land_sched:
+        for pay in land_sched:
+            _add(cats["land"], int(pay["month"]), land_price * float(pay["pct"]) / 100)
+        row("Acquisition", "Land / property price", land_price,
+            "paid " + ", ".join(f"{float(p['pct']):g}% in M{int(p['month'])}" for p in land_sched))
+    else:
+        _add(cats["land"], 0, land_price)
+        row("Acquisition", "Land / property price", land_price, "fixed")
     for key, label in (("site.transfer_tax_pct", "Transfer tax (ISAI)"), ("site.legal_notary_pct", "Notary & legal"),
                        ("site.brokerage_pct", "Brokerage")):
         amt = land_price * g(a, key) / 100
@@ -260,7 +312,7 @@ def _costs(profile: dict, a: dict, design: dict, predev: int, con_months: int, g
     _add(cats["acquisition"], 0, dd)
     row("Acquisition", "Due diligence & closing", dd, "fixed")
 
-    curve = s_curve(con_months)
+    curve = curve_weights(str(g(a, "cost.curve", "s_curve")), con_months)
     hard_months = list(range(con_start + 1, con_start + con_months + 1))
     escal = [(1 + esc) ** (m / 12) for m in hard_months]
 
@@ -547,6 +599,7 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
     delivery = predev + con_months
 
     costs = _costs(profile, a, design, predev, con_months, ground_up)
+    custom = a.get("custom_flows") or []
     if mode == "sale":
         rev = _sale_revenue(a, design, con_start, delivery)
         commercial = [x + y for x, y in zip(*_aligned(rev["commissions"], rev["marketing"]))]
@@ -555,8 +608,23 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
         rev = _rent_revenue(a, design, delivery, ground_up)
         commercial = [0.0]
         horizon = rev["exit_month"]
+    sale_marks = {"closing": 0, "construction_start": con_start, "delivery": delivery,
+                  "sales_start": rev.get("sales_start", delivery) if mode == "sale" else rev.get("lease_start", delivery)}
+    custom_resolved = []
+    for cf in custom:
+        m = anchor_month(cf.get("anchor"), cf.get("offset"), sale_marks) if cf.get("anchor") else int(cf.get("month") or 0)
+        custom_resolved.append({**cf, "resolved_month": m})
+        horizon = max(horizon, m)
     n = horizon + 1
     cats = costs["cats"]
+    cats["custom"] = []
+    for cf in custom_resolved:
+        if cf.get("type", "cost") == "cost":
+            _add(cats["custom"], cf["resolved_month"], float(cf["amount"]))
+            costs["rows"].append({"group": "Custom items", "item": cf.get("label") or "Custom cost", "amount": float(cf["amount"]),
+                                  "basis": f"M{cf['resolved_month']} (user-defined)"})
+        else:
+            _add(rev["inflows"], cf["resolved_month"], float(cf["amount"]))
     _pad(*cats.values(), commercial, rev["inflows"], length=n)
     if mode == "sale":
         _pad(rev["sold"], rev["contract"], length=n)
@@ -688,7 +756,7 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
         months.append({
             "month": t, "phase": phase(t),
             "land_acq": cats["land"][t] + cats["acquisition"][t], "hard": cats["hard"][t], "soft": cats["soft"][t],
-            "other": cats["contingency"][t] + cats["developer_fee"][t], "commercial": commercial[t],
+            "other": cats["contingency"][t] + cats["developer_fee"][t] + cats["custom"][t], "commercial": commercial[t],
             "interest": cap["senior_interest"][t] + cap["mezz_interest"][t], "fees": cap["fees"][t],
             "outflow": outflows[t], "inflow": inflows[t], "unlevered_cf": unlev[t],
             "equity_contrib": cap["equity_contrib"][t], "equity_dist": cap["equity_dist"][t],

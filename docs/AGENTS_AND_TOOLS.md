@@ -32,10 +32,14 @@ There are no cycles. Specialists have no delegation tool, so delegation depth is
 | `apply_zoning_code(code)` | Parses a CDMX code such as `H/4/20/M` (deterministic, `engine/zoning.py`) into legal limits; regulatory, so always **pending** | pending only |
 | `scale_unit_sizes(target_average_size)` | "Change the average apartment size to 110 m²" | yes |
 | `set_unit_mix(unit_types[], reason)` | Replace the unit mix (shares must add to 100%) | yes |
+| `set_sales_phases(phases[], reason)` | Sales pace with a shape over time (e.g. launch peak + delivery peak), anchored to closing / sales start / construction start / delivery | yes |
+| `set_price_phases(phases[], reason)` | Launch discounts or delivery premiums for contracts signed in a period | yes |
+| `set_land_payments(payments[], reason)` | Land paid in installments (must add to 100%) | yes |
+| `set_custom_cash_flows(flows[], reason)` | Any one-off cost or revenue the standard inputs do not cover | yes |
 | `undo_last_change()` | Reverts the last batch of changes | yes |
 | `request_status_change(status, reason)` | Approve / add to portfolio. **Always pending** | pending only |
 | `create_project(...)` | New project from a natural-language description | yes |
-| `what_if(changes[])` | Full model re-run with temporary overrides; nothing saved | no |
+| `what_if(changes[], schedules…)` | Full model re-run with temporary scalar and/or schedule overrides; nothing saved | no |
 | `solve_for_target(key, metric, target)` | Reverse underwriting by bisection on the full model | no |
 | `compare_sustainability(measure_keys?)` | With vs. without measures, beneficiary-aware | no |
 | `request_research(kind, request?)` | Delegate to one specialist. Results become pending proposals | proposals only |

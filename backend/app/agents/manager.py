@@ -47,6 +47,39 @@ class ChangeIn(BaseModel):
     op: Literal["set", "pct", "add"] = "set"
 
 
+Anchor = Literal["closing", "sales_start", "construction_start", "delivery"]
+
+
+class SalesPhaseIn(BaseModel):
+    name: str
+    anchor: Anchor = Field(description="Milestone the phase starts from")
+    offset: int = Field(0, description="Months after (negative = before) the anchor")
+    months: int = Field(description="Duration in months")
+    units_per_month: float = Field(description="Gross units sold per month during this phase (cancellations are applied by the model)")
+
+
+class PricePhaseIn(BaseModel):
+    name: str
+    anchor: Anchor
+    offset: int = 0
+    months: int
+    pct: float = Field(description="Price change for contracts signed in this period, in percent (-8 = 8% discount)")
+
+
+class LandPaymentIn(BaseModel):
+    month: int = Field(description="Month from land closing (0 = at closing)")
+    pct: float = Field(description="Percent of the land price paid in that month; all rows must add to 100")
+
+
+class CustomFlowIn(BaseModel):
+    label: str
+    type: Literal["cost", "revenue"]
+    amount: float = Field(description="Positive amount in the project currency")
+    month: int | None = Field(None, description="Absolute month from closing, OR use anchor + offset")
+    anchor: Anchor | None = None
+    offset: int = 0
+
+
 class UnitTypeIn(BaseModel):
     name: str
     bedrooms: int = 0
@@ -254,6 +287,49 @@ def apply_zoning_code(ctx: RunContext[ManagerDeps], code: str) -> dict:
             "applied": [{"key": x["key"], "new": x["new"]} for x in r["applied"]]}
 
 
+def _apply_schedule(ctx: RunContext[ManagerDeps], key: str, rows: list, reason: str, page: str) -> dict:
+    p = _project(ctx)
+    before = services.results(p)
+    payload = [r.model_dump(exclude_none=True) for r in rows]
+    res = store.apply_changes(p["id"], [{"key": key, "value": payload}], actor="chatbot", reason=reason)
+    after = services.results(store.get_project(p["id"]))
+    ctx.deps.ctx.changes += res["applied"]
+    _log(ctx, f"set_{key}", f"{len(payload)} row(s)" + (f", rejected: {res['rejected'][0]['error']}" if res["rejected"] else ""), page,
+         applied=res["applied"], rejected=res["rejected"])
+    return {"saved_rows": payload if res["applied"] else [], "rejected": res["rejected"], "model_status": after.get("status"),
+            "effect_on_metrics": [{"metric": e["metric"], "before": _round(e["before"]), "after": _round(e["after"])}
+                                  for e in services.describe_change_effect(before, after)],
+            "schedule": after.get("schedule") if after.get("status") == "ok" else None}
+
+
+@agent.tool
+def set_sales_phases(ctx: RunContext[ManagerDeps], phases: list[SalesPhaseIn], reason: str) -> dict:
+    """Give the sales pace a shape over time: periods with their own units/month (e.g. a launch peak at construction start
+    and a second peak at delivery). Outside the phases the base absorption (rev.absorption_per_month) applies, so set that
+    to the slow 'in-between' pace. Replaces the existing phases; pass an empty list to remove them."""
+    return _apply_schedule(ctx, "sales_phases", phases, reason, "market")
+
+
+@agent.tool
+def set_price_phases(ctx: RunContext[ManagerDeps], phases: list[PricePhaseIn], reason: str) -> dict:
+    """Price changes for contracts signed in given periods (e.g. -8% presale/launch discount, +5% premium after delivery).
+    Applied on top of the base price and annual escalation. Replaces existing price phases; empty list removes them."""
+    return _apply_schedule(ctx, "price_phases", phases, reason, "market")
+
+
+@agent.tool
+def set_land_payments(ctx: RunContext[ManagerDeps], payments: list[LandPaymentIn], reason: str) -> dict:
+    """Pay the land in installments (percent of the price by month from closing; must add to 100). Empty list = all at closing."""
+    return _apply_schedule(ctx, "land_payments", payments, reason, "budget")
+
+
+@agent.tool
+def set_custom_cash_flows(ctx: RunContext[ManagerDeps], flows: list[CustomFlowIn], reason: str) -> dict:
+    """Add any one-off cost or revenue the standard inputs don't cover (a mitigation fee, a utility connection, the sale of
+    a commercial unit, a subsidy...). Replaces the list, so include existing flows you want to keep (see the snapshot)."""
+    return _apply_schedule(ctx, "custom_flows", flows, reason, "budget")
+
+
 @agent.tool
 def undo_last_change(ctx: RunContext[ManagerDeps]) -> dict:
     """Undo the most recent batch of assumption changes for the open project."""
@@ -294,16 +370,25 @@ def create_project(ctx: RunContext[ManagerDeps], name: str, city: str, neighborh
 
 # ----------------------------------------------------------------------------- analysis tools (no saving)
 @agent.tool
-def what_if(ctx: RunContext[ManagerDeps], changes: list[ChangeIn]) -> dict:
-    """Run the full model with temporary changes (nothing is saved). Returns base vs scenario metrics."""
+def what_if(ctx: RunContext[ManagerDeps], changes: list[ChangeIn] | None = None, sales_phases: list[SalesPhaseIn] | None = None,
+            price_phases: list[PricePhaseIn] | None = None, land_payments: list[LandPaymentIn] | None = None,
+            custom_flows: list[CustomFlowIn] | None = None) -> dict:
+    """Run the full model with temporary changes (nothing is saved): scalar changes and/or schedules (sales phases, price
+    phases, land payments, custom cash flows). Returns base vs scenario metrics."""
+    from engine.schedules import validate_schedule
     p = _project(ctx)
+    changes = changes or []
     try:
         ov = analysis.apply_changes(p["assumptions"], [c.model_dump() for c in changes])
+        for key, rows in (("sales_phases", sales_phases), ("price_phases", price_phases), ("land_payments", land_payments),
+                          ("custom_flows", custom_flows)):
+            if rows is not None:
+                ov[key] = validate_schedule(key, [r.model_dump(exclude_none=True) for r in rows])
     except ValidationError as exc:
         return {"error": str(exc)}
     base = services.results(p)
     sc = run_model(p["profile"], p["assumptions"], ov)
-    _log(ctx, "what_if", ", ".join(f"{c.key} {c.op} {c.value}" for c in changes), "model")
+    _log(ctx, "what_if", ", ".join([f"{c.key} {c.op} {c.value}" for c in changes] + [k for k in ov if k in ("sales_phases", "price_phases", "land_payments", "custom_flows")]), "model")
     return {"changes": ov, "base": _metrics(base), "scenario": _metrics(sc),
             "scenario_covenant_breaches": [c["name"] for c in sc.get("covenants", []) if not c["ok"]],
             "scenario_warnings": sc.get("warnings", [])}

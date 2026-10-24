@@ -75,6 +75,7 @@ def summarize_for_llm(project: dict) -> dict:
         "model_mode": model_mode(project["profile"]),
         "assumptions": filled,
         "unit_mix": a.get("unit_mix"),
+        "schedules": {k: a.get(k) for k in ("sales_phases", "price_phases", "land_payments", "custom_flows") if a.get(k)},
         "sustainability_enabled": [m["key"] for m in a.get("sustainability_measures") or [] if m.get("enabled")],
         "model_status": res.get("status"),
         "missing_inputs": res.get("missing", []),
@@ -85,6 +86,7 @@ def summarize_for_llm(project: dict) -> dict:
     }
     if res.get("status") == "ok":
         m = res["metrics"]
+        snap["timeline"] = res["schedule"]
         snap["metrics"] = {k: (round(v, 4) if isinstance(v, float) and abs(v) < 100 else (round(v) if isinstance(v, float) else v))
                            for k, v in key_metrics(res).items()}
         snap["covenant_breaches"] = [c["name"] for c in res["covenants"] if not c["ok"]]

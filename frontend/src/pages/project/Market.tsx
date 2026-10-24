@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
 import { api, notifyProjectChanged, type Json } from '../../api'
 import { useProject } from '../../components/Layout'
+import ScheduleEditor from '../../components/ScheduleEditor'
 import { Callout, Card, ChartTip, FieldGroup, Kpi, Legend, ModelIncomplete, PageHead, StatusBadge } from '../../components/ui'
 import { ResearchButton, ResearchMeta, SourceLink, axisProps, gridProps, mTick, useResearch } from '../../components/b/common'
 import { SERIES, money, num, pct, pctNum } from '../../format'
@@ -64,6 +65,12 @@ export default function Market() {
         <FieldGroup data={data} keys={RENT_KEYS} title="Rental assumptions" sub="GPR − vacancy − concessions = EGI; EGI − opex = NOI" />
       )}
 
+      {sale && (
+        <div className="grid g2" style={{ marginTop: 16 }}>
+          <ScheduleEditor pid={p.id} k="sales_phases" rows={p.assumptions.sales_phases} />
+          <ScheduleEditor pid={p.id} k="price_phases" rows={p.assumptions.price_phases} />
+        </div>
+      )}
       {ok && sale && <SalesCharts months={res.months} cur={cur} />}
       {ok && !sale && <NoiChart months={res.months} cur={cur} />}
     </div>
