@@ -53,7 +53,7 @@
   .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 21px; height: 21px; border-radius: 50%; background: var(--navy7); color: #fff;
                         font-size: 9pt; font-weight: 700; display: grid; place-items: center; }
   .pb { break-before: page; }
-  footer { font-size: 8pt; color: var(--t3); text-align: center; padding: 14px; }
+  footer { font-size: 8pt; color: var(--t3); text-align: center; padding: 6px; }
   @page { size: Letter; margin: 0.45in; }
   @media print {
     body { background: #fff; font-size: 10pt; }
@@ -284,26 +284,23 @@
 <p>The first market is Mexico City residential development, which faces a supply gap of ~80,000 homes a year <span class="src">[1]</span>. The same engine covers build-to-rent and acquisitions, and other cities work through researched or manual assumptions. A fund screening 50 sites a year at 40–80 hours each spends 2,000–4,000 analyst hours. Cutting a first screen to a few hours frees most of that for the deals worth pursuing.</p>
 
 <h3>7.3 User validation</h3>
-<div class="callout warn"><b>Status: a structured user test with a practicing real estate investment professional has not been run yet at the time of writing.</b>
-The figures above come from the system's own measurements and published estimates, not from a user trial. The test protocol is ready:
-(1) the participant underwrites the Polanco case the way they do today (Excel / usual tools) and times it; (2) they repeat it in TerraMind, editing by chat and form;
-(3) we record time to a first IC-ready view, the number of assumptions with a traceable source, errors found, and their feedback on what they would and would not trust.
-Results will be added to <code>docs/evidence/user_test.md</code>.</div>
+<p><b>Author test (completed, October 2026).</b> I tested TerraMind end to end, drawing on my experience in real estate investment funds (<code>docs/evidence/user_test.md</code>). The workflow, chat editing and microphone dictation work, and the interface is usable. Chat is <i>"particularly useful for someone ... who already has several assumptions in mind and wants to enter them quickly"</i>. The key value is connecting stages <i>"usually handled separately"</i>. On trust: <i>"I would want to independently verify zoning regulations, market comparables, construction costs, and financing assumptions"</i>, which is why AI proposals wait for approval. Requested next: a deeper model and more asset types.</p>
+<div class="callout warn"><b>Still to do: an independent, timed test.</b> Another real estate professional underwrites the Polanco case with their usual tools, then in TerraMind, measuring time to a first IC-ready view and errors found.</div>
 
 <h2><span class="n">8</span>Limits and next steps</h2>
 <table class="t">
   <tr><th>Limit today</th><th>Next step</th></tr>
-  <tr><td>Parcel-level CDMX zoning is not reliably on the open web; the agent reports <i>not found</i> and the user enters values manually</td><td>Integrate the SEDUVI SIG parcel service or ingest an uploaded <i>Certificado Único de Zonificación</i> (PDF) with document extraction</td></tr>
+  <tr><td>Parcel-level CDMX zoning is not reliably on the open web; the agent reports <i>not found</i> and the user enters values, uploads the certificate or types its zoning code</td><td>Integrate the SEDUVI SIG parcel service (uploading the <i>Certificado Único de Zonificación</i> and typing its zoning code already work)</td></tr>
   <tr><td>Comparables are asking prices from portals; few include price and size</td><td>Licensed data (e.g. transaction registries, appraisal databases) and appraisal-style adjustments</td></tr>
   <tr><td>Commercial, industrial and mixed-use use the shared area-based rent model</td><td>Lease-by-lease rent rolls; multi-component mixed-use with separate revenues and costs</td></tr>
   <tr><td>Single-hurdle waterfall; total absorption pace only</td><td>Multi-tier IRR hurdles and catch-up; absorption by unit type and price elasticity</td></tr>
   <tr><td>Sustainability values are preliminary estimates</td><td>Energy-model integration (EDGE app inputs) and measured utility data for operating assets</td></tr>
   <tr><td>Private accounts and guest workspaces, but no shared projects or roles; local SQLite</td><td>Team workspaces with roles (analyst / approver), Postgres, hosted deployment, lender and LP reporting packs</td></tr>
 </table>
-<p class="small"><b>Disclaimer.</b> All demo projects (Polanco Residences, Del Valle Tower, Narvarte Green Rentals) and their inputs are fictional and illustrative. Researched figures (TIIE, comparables, cost index) are real search results with sources and dates, used only as proposals. TerraMind is decision support, not investment advice.</p>
+<p class="small"><b>Disclaimer.</b> The three demo projects and their inputs are fictional. Researched figures (TIIE, comparables, cost index) are real, sourced and dated, used only as proposals. Decision support, not investment advice.</p>
 
 <h3>Sources</h3>
-<ol class="small">
+<ol class="small" style="font-size:7.5pt">
   <li>Softec / E. Towle, via Forbes México, "Precio promedio de vivienda en CDMX es de 4.7 mdp; consumidor promedio puede pagar 1.2 mdp", and Expansión (2018), "¿Qué hay detrás del elevado precio de la vivienda en la CDMX?": <a href="https://forbes.com.mx/precio-promedio-de-vivienda-en-cdmx-es-de-4-7-m-consumidor-promedio-puede-pagar-1-2-m/">forbes.com.mx</a>, <a href="https://expansion.mx/empresas/2018/06/27/que-hay-detras-del-elevado-precio-de-la-vivienda-en-la-cdmx">expansion.mx</a></li>
   <li>CONAVI data (2023) on rezago habitacional and new-housing needs, as summarized in "Programa de Vivienda" (2024): <a href="https://sinembargo.mx/wp-content/uploads/2024/10/CPM-Programa-Vivienda-14oct24.pdf">sinembargo.mx (PDF)</a>; ENAVI 2020 (INEGI)</li>
   <li>The AI Consulting Network (2026), "AI deal analysis ROI: time and money savings per deal in CRE" (industry estimate, not a peer-reviewed study): <a href="https://www.theaiconsultingnetwork.com/blog/ai-deal-analysis-roi-time-money-savings-per-deal-cre-2026">theaiconsultingnetwork.com</a></li>
