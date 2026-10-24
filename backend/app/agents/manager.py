@@ -388,7 +388,7 @@ async def run_chat(project_id: int | None, message: str, ctx: TurnContext) -> di
     answer, run = None, None
     try:
         async with agent.iter(prompt, deps=deps, model=build_model(), message_history=history, usage_limits=limits,
-                              model_settings={"openai_reasoning_effort": "low"}) as run:
+                              model_settings={"openai_reasoning_effort": ctx.limits.get("reasoning_effort", "low")}) as run:
             async for node in run:
                 if Agent.is_call_tools_node(node):
                     for part in node.model_response.parts:

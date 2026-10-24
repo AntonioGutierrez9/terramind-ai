@@ -1,0 +1,172 @@
+{
+  "summary": {
+    "low": {
+      "correct": 5,
+      "n": 5,
+      "avg_cost_usd": 0.000297906,
+      "avg_output_tokens": 154.6,
+      "avg_input_tokens": 6488.8,
+      "avg_seconds": 4.32
+    },
+    "medium": {
+      "correct": 5,
+      "n": 5,
+      "avg_cost_usd": 0.000344378,
+      "avg_output_tokens": 182.2,
+      "avg_input_tokens": 6521.4,
+      "avg_seconds": 4.0600000000000005
+    }
+  },
+  "rows": [
+    {
+      "effort": "low",
+      "message": "Increase construction costs by 10%.",
+      "correct": true,
+      "seconds": 4.5,
+      "requests": 2,
+      "input_tokens": 6564,
+      "cached_tokens": 4753,
+      "output_tokens": 187,
+      "web_searches": 0,
+      "cost_usd": 0.00032213,
+      "tools": [
+        "update_assumptions"
+      ]
+    },
+    {
+      "effort": "low",
+      "message": "Assume we sell 4 apartments per month.",
+      "correct": true,
+      "seconds": 3.6,
+      "requests": 2,
+      "input_tokens": 6522,
+      "cached_tokens": 4756,
+      "output_tokens": 161,
+      "web_searches": 0,
+      "cost_usd": 0.00030466,
+      "tools": [
+        "update_assumptions"
+      ]
+    },
+    {
+      "effort": "low",
+      "message": "What happens to our equity IRR if construction takes six months longer?",
+      "correct": true,
+      "seconds": 6.5,
+      "requests": 2,
+      "input_tokens": 6502,
+      "cached_tokens": 4760,
+      "output_tokens": 133,
+      "web_searches": 0,
+      "cost_usd": 0.0002883,
+      "tools": [
+        "what_if"
+      ]
+    },
+    {
+      "effort": "low",
+      "message": "What's the maximum amount we should pay for the land if we want an 18% equity IRR?",
+      "correct": true,
+      "seconds": 3.0,
+      "requests": 2,
+      "input_tokens": 6372,
+      "cached_tokens": 4767,
+      "output_tokens": 114,
+      "web_searches": 0,
+      "cost_usd": 0.00026517,
+      "tools": [
+        "solve_for_target"
+      ]
+    },
+    {
+      "effort": "low",
+      "message": "Change the average apartment size to 110 m\u00b2.",
+      "correct": true,
+      "seconds": 4.0,
+      "requests": 2,
+      "input_tokens": 6484,
+      "cached_tokens": 4757,
+      "output_tokens": 178,
+      "web_searches": 0,
+      "cost_usd": 0.00030927,
+      "tools": [
+        "scale_unit_sizes"
+      ]
+    },
+    {
+      "effort": "medium",
+      "message": "Increase construction costs by 10%.",
+      "correct": true,
+      "seconds": 3.4,
+      "requests": 2,
+      "input_tokens": 6682,
+      "cached_tokens": 3119,
+      "output_tokens": 253,
+      "web_searches": 0,
+      "cost_usd": 0.00051399,
+      "tools": [
+        "update_assumptions"
+      ]
+    },
+    {
+      "effort": "medium",
+      "message": "Assume we sell 4 apartments per month.",
+      "correct": true,
+      "seconds": 4.5,
+      "requests": 2,
+      "input_tokens": 6552,
+      "cached_tokens": 4756,
+      "output_tokens": 185,
+      "web_searches": 0,
+      "cost_usd": 0.00031966000000000004,
+      "tools": [
+        "update_assumptions"
+      ]
+    },
+    {
+      "effort": "medium",
+      "message": "What happens to our equity IRR if construction takes six months longer?",
+      "correct": true,
+      "seconds": 4.8,
+      "requests": 2,
+      "input_tokens": 6498,
+      "cached_tokens": 4760,
+      "output_tokens": 130,
+      "web_searches": 0,
+      "cost_usd": 0.00028639999999999997,
+      "tools": [
+        "what_if"
+      ]
+    },
+    {
+      "effort": "medium",
+      "message": "What's the maximum amount we should pay for the land if we want an 18% equity IRR?",
+      "correct": true,
+      "seconds": 3.2,
+      "requests": 2,
+      "input_tokens": 6372,
+      "cached_tokens": 4767,
+      "output_tokens": 111,
+      "web_searches": 0,
+      "cost_usd": 0.00026367000000000003,
+      "tools": [
+        "solve_for_target"
+      ]
+    },
+    {
+      "effort": "medium",
+      "message": "Change the average apartment size to 110 m\u00b2.",
+      "correct": true,
+      "seconds": 4.4,
+      "requests": 2,
+      "input_tokens": 6503,
+      "cached_tokens": 4757,
+      "output_tokens": 232,
+      "web_searches": 0,
+      "cost_usd": 0.00033817,
+      "tools": [
+        "scale_unit_sizes"
+      ]
+    }
+  ]
+}
