@@ -119,3 +119,29 @@ def test_chat_translation_is_cached_private_and_skips_text_already_in_language()
     assert got[0]["content"].startswith("¿Cuál") and got[0]["lang"] == "es"
     assert a.get(f"/api/chat/messages?project_id={pid}", headers={"X-Lang": "en"}).json()[0]["content"].startswith("What")
     assert b.post("/api/chat/translate", json={"project_id": pid}, headers={"X-Lang": "es"}).status_code == 404
+
+
+def test_only_signed_in_users_can_remove_their_projects():
+    from app import store
+    guest, user, other = client(), client(), client()
+    guest.post("/api/auth/guest")
+    gpid = guest.get("/api/projects").json()[0]["id"]
+    assert guest.delete(f"/api/projects/{gpid}").status_code == 403  # guests keep their projects
+    assert len(guest.get("/api/projects").json()) == 3
+    pw = "remove-me-123"
+    user.post("/api/auth/signup", json={"first_name": "Ana", "last_name": "Ruiz", "email": "ana.remove@example.com",
+                                        "password": pw, "confirm_password": pw})
+    other.post("/api/auth/signup", json={"first_name": "Leo", "last_name": "Paz", "email": "leo.remove@example.com",
+                                         "password": pw, "confirm_password": pw})
+    projects = user.get("/api/projects").json()
+    pid = projects[0]["id"]
+    up = user.post(f"/api/projects/{pid}/documents", files={"file": ("note.txt", io.BytesIO(b"Lot area 2,500 m2"), "text/plain")},
+                   data={"analyze": "false"})
+    path = store.get_document(up.json()["document"]["id"])["path"]
+    assert os.path.exists(path)
+    assert other.delete(f"/api/projects/{pid}").status_code == 404  # cannot touch someone else's project
+    assert user.delete(f"/api/projects/{pid}").json()["ok"] is True
+    assert pid not in {p["id"] for p in user.get("/api/projects").json()}
+    assert len(user.get("/api/projects").json()) == len(projects) - 1
+    assert store.project_owner(pid)[0] is False and not os.path.exists(path)  # data and stored file are gone
+    assert user.get(f"/api/projects/{pid}").status_code == 404

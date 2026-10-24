@@ -584,6 +584,18 @@ def save_document_analysis(doc_id: int, analysis: dict) -> None:
         c.execute("UPDATE documents SET analysis=? WHERE id=?", (dumps(analysis), doc_id))
 
 
+def delete_project(pid: int) -> list[str]:
+    """Permanently remove a project and everything that belongs to it; returns the stored file paths to delete.
+    The token-usage ledger is kept so past AI spending stays visible on the usage page."""
+    paths = [r["path"] for r in query("SELECT path FROM documents WHERE project_id=?", (pid,)) if r["path"]]
+    with tx() as c:
+        c.execute("DELETE FROM message_translations WHERE message_id IN (SELECT id FROM chat_messages WHERE project_id=?)", (pid,))
+        for table in ("chat_messages", "documents", "changes", "pending_changes", "variants", "research", "actuals", "ic_memos"):
+            c.execute(f"DELETE FROM {table} WHERE project_id=?", (pid,))
+        c.execute("DELETE FROM projects WHERE id=?", (pid,))
+    return paths
+
+
 def delete_document(doc_id: int) -> str:
     d = get_document(doc_id)
     with tx() as c:

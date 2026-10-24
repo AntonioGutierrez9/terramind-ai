@@ -29,7 +29,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-Then open **http://localhost:8000** (`run.py` opens it for you). Choose **Continue as guest** (fastest) or **Create account**. Each guest or account gets a private copy of three fictional demo projects.
+Then open **http://localhost:8000** (`run.py` opens it for you). Choose **Continue as guest** (fastest) or **Create account**. Each guest or account gets a private copy of three fictional demo projects. Signed-in users can remove projects they don't want (trash icon on the Portfolio page, with a confirmation); guest workspaces cannot remove projects.
 
 ### API key (.env)
 
@@ -47,7 +47,7 @@ See `.env.example`. **Without a key, the whole financial platform still works.**
 
 ```bash
 python run.py --port 8001 --no-browser       # another port, no browser
-cd backend && python -m pytest -q            # 66 tests: engine math, schedules, user variables, advisor, Excel export, safety controls, accounts and data isolation
+cd backend && python -m pytest -q            # 67 tests: engine math, schedules, user variables, advisor, Excel export, safety controls, accounts and data isolation
 cd frontend && npm install && npm run dev    # frontend dev server on :5173 (proxies /api to :8000)
 cd frontend && npm run build                 # rebuild frontend/dist
 ```

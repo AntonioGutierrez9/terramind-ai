@@ -1,12 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Plus } from 'lucide-react'
-import type { Json } from '../api'
+import { useState } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
+import { api, notifyProjectChanged, type Json } from '../api'
+import { useAuth } from '../auth'
+import { t as tr } from '../i18n'
 import { Callout, Card, ChartTip, Kpi, Loading, PageHead, StatusBadge } from '../components/ui'
 import { AXIS, GRID, money, multiple, pct, SERIES } from '../format'
 import { useFetch } from '../state'
 
 const HURDLE = 0.18
+// keeps the remove button visible when the table scrolls sideways
+const STICKY = { position: 'sticky', right: 0, background: 'var(--surface)', padding: '0 6px' } as const
 const MODEL_LABEL: Record<string, string> = {
   build_to_sell: 'Build-to-sell', develop_and_sell: 'Develop & sell', build_to_rent: 'Build-to-rent',
   acquire_and_hold: 'Acquire & hold', value_add: 'Value-add',
@@ -14,7 +19,17 @@ const MODEL_LABEL: Record<string, string> = {
 
 export default function Portfolio() {
   const nav = useNavigate()
+  const { user } = useAuth()
+  const [removing, setRemoving] = useState<number | null>(null)
+  const [removeError, setRemoveError] = useState<string | null>(null)
   const { data, error } = useFetch<Json>('/api/portfolio')
+  // Signed-in users choose which projects to keep; guest workspaces cannot remove projects.
+  const remove = async (p: Json) => {
+    const msg = [tr('Remove this project permanently?'), p.name, tr('Its assumptions, chat, documents and history will be deleted. This cannot be undone.')]
+    if (!confirm(msg.join('\n\n'))) return
+    setRemoving(p.id); setRemoveError(null)
+    try { await api.del(`/api/projects/${p.id}`); notifyProjectChanged(null) } catch (e) { setRemoveError((e as Error).message) } finally { setRemoving(null) }
+  }
   if (error) return <Callout tone="bad">{error}</Callout>
   if (!data) return <Loading label="Loading portfolio…" />
   const t = data.totals || {}
@@ -79,11 +94,12 @@ export default function Portfolio() {
 
       <div className="grid g3">
         <Card title="Projects" className="span2" bodyClass="">
+          {removeError && <Callout tone="bad">{removeError}</Callout>}
           <div className="table-wrap">
             <table className="t">
               <thead>
                 <tr><th>Project</th><th>Neighborhood</th><th>Model</th><th>Status</th><th className="num">Equity IRR</th>
-                  <th className="num">MOIC</th><th className="num">Profit</th><th className="num">GDV</th><th className="num">Alerts</th><th>Model</th></tr>
+                  <th className="num">MOIC</th><th className="num">Profit</th><th className="num">GDV</th><th className="num">Alerts</th><th>Model</th>{user && <th style={{ position: 'sticky', right: 0 }} />}</tr>
               </thead>
               <tbody>
                 {projects.map((p) => {
@@ -100,6 +116,13 @@ export default function Portfolio() {
                       <td className="num">{money(m.gdv, p.currency || cur)}</td>
                       <td className="num">{p.alerts || 0}</td>
                       <td>{p.model_status === 'ok' ? <StatusBadge level="good">complete</StatusBadge> : <StatusBadge level="amber">incomplete</StatusBadge>}</td>
+                      {user && (
+                        <td className="right" style={STICKY}>
+                          <button className="btn ghost sm" onClick={() => remove(p)} disabled={removing === p.id} title="Remove project" aria-label={`Remove ${p.name}`}>
+                            {removing === p.id ? <span className="spinner" /> : <Trash2 size={14} />}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   )
                 })}

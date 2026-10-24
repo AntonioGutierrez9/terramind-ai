@@ -11,6 +11,7 @@ import os
 import re
 import secrets
 import time
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -267,9 +268,13 @@ def duplicate(pid: int, body: dict | None = None):
 
 
 @app.delete("/api/projects/{pid}")
-def archive(pid: int):
-    store.set_status(pid, "archived", False, actor="user")
-    return {"ok": True}
+def remove_project(pid: int, request: Request):
+    """Signed-in users can remove their own projects for good; guest workspaces keep theirs."""
+    if not owner_of(request).startswith("u:"):
+        raise HTTPException(403, "Sign in to remove projects. Guest workspaces cannot remove projects.")
+    for path in store.delete_project(pid):
+        Path(path).unlink(missing_ok=True)
+    return {"ok": True, "deleted": pid}
 
 
 # ----------------------------------------------------------------------------- analysis
