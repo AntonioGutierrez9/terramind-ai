@@ -75,97 +75,97 @@ TerraMind calculates them from the underlying assumptions.
 Users can also export the model to Excel to review or continue working on it outside the application.
 
 20
-00:01:10,986 --> 00:01:13,918
+00:01:11,004 --> 00:01:13,936
 The feature I find most interesting is the chatbot.
 
 21
-00:01:13,918 --> 00:01:15,873
+00:01:13,936 --> 00:01:15,891
 Instead of navigating through multiple spreadsheets,
 
 22
-00:01:15,873 --> 00:01:19,456
+00:01:15,891 --> 00:01:19,474
 users can explain what they want to change in natural language.
 
 23
-00:01:19,706 --> 00:01:20,153
+00:01:19,724 --> 00:01:20,171
 Here,
 
 24
-00:01:20,153 --> 00:01:28,637
+00:01:20,171 --> 00:01:28,655
 a ten percent increase in construction costs raises the hard cost from 24,000 to 26,400 pesos per square meter,
 
 25
-00:01:28,637 --> 00:01:32,656
+00:01:28,655 --> 00:01:32,674
 and the equity IRR falls from 24.9% to 21.2%.
 
 26
-00:01:32,906 --> 00:01:36,886
+00:01:32,924 --> 00:01:36,904
 The assistant can update assumptions, incorporate more complex cash-flow schedules,
 
 27
-00:01:36,886 --> 00:01:40,866
+00:01:36,904 --> 00:01:40,884
 and help users understand how those changes affect the investment.
 
 28
-00:01:50,432 --> 00:01:53,671
+00:01:50,450 --> 00:01:53,689
 I also wanted to make the platform easier to use,
 
 29
-00:01:53,671 --> 00:01:57,882
+00:01:53,689 --> 00:01:57,899
 so I added speech-to-text functionality. Users can dictate instructions instead of typing them.
 
 30
-00:01:57,882 --> 00:02:01,445
+00:01:57,899 --> 00:02:01,462
 And because I eventually want this to be useful in Mexico,
 
 31
-00:02:01,445 --> 00:02:03,712
+00:02:01,462 --> 00:02:03,730
 the application supports both English and Spanish.
 
 32
-00:02:04,112 --> 00:02:07,850
+00:02:04,130 --> 00:02:07,868
 Another important objective was incorporating sustainability into investment decisions.
 
 33
-00:02:07,850 --> 00:02:12,420
+00:02:07,868 --> 00:02:12,437
 TerraMind can help compare different improvements and evaluate their financial impact.
 
 34
-00:02:12,420 --> 00:02:16,573
+00:02:12,437 --> 00:02:16,591
 The AI agents can also review the investment, identify risks,
 
 35
-00:02:16,573 --> 00:02:20,312
+00:02:16,591 --> 00:02:20,330
 and suggest changes that could improve the project's performance.
 
 36
-00:02:20,821 --> 00:02:25,062
+00:02:20,838 --> 00:02:25,080
 I also wanted TerraMind to be useful beyond the initial investment decision.
 
 37
-00:02:25,062 --> 00:02:30,011
+00:02:25,080 --> 00:02:30,029
 Users can save projects, return to their analyses, and monitor how investments are performing.
 
 38
-00:02:30,011 --> 00:02:33,545
+00:02:30,029 --> 00:02:33,563
 The platform supports individual accounts to keep project information separate,
 
 39
-00:02:33,545 --> 00:02:38,141
+00:02:33,563 --> 00:02:38,158
 as well as guest access for someone who just wants to explore it.
 
 40
-00:02:38,521 --> 00:02:40,095
+00:02:38,538 --> 00:02:40,112
 TerraMind is still a prototype,
 
 41
-00:02:40,095 --> 00:02:44,816
+00:02:40,112 --> 00:02:44,834
 but it brings together several parts of real estate investing that are usually handled separately.
 
 42
-00:02:44,816 --> 00:02:49,538
+00:02:44,834 --> 00:02:49,556
 I see it as a starting point for something I could continue developing after Yale,
 
 43
-00:02:49,538 --> 00:02:53,631
+00:02:49,556 --> 00:02:53,648
 especially as I pursue my interest in real estate investment and sustainable development.

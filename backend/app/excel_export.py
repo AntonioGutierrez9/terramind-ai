@@ -17,7 +17,8 @@ import math
 from datetime import date
 
 from openpyxl import Workbook
-from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+from openpyxl.chart import BarChart, LineChart, PieChart, Reference, Series
+from openpyxl.chart.series import SeriesLabel, StrRef
 from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
@@ -102,7 +103,7 @@ class Builder:
         for t in range(self.H):
             c = ws.cell(row=row, column=MONTH_COL0 + t, value=t if t == 0 else f"={self.col(t - 1)}{row}+1")
             c.font, c.fill, c.alignment = HDR, NAVY, Alignment(horizontal="center")
-            ws.column_dimensions[self.col(t)].width = 11
+            ws.column_dimensions[self.col(t)].width = 14
         ws.column_dimensions["A"].width = 46
         ws.column_dimensions["B"].width = 16
         ws.column_dimensions["C"].width = 22
@@ -397,6 +398,8 @@ class Builder:
         ws.column_dimensions["A"].width = 46
         ws.column_dimensions["B"].width = 18
         ws.column_dimensions["C"].width = 50
+        ws.column_dimensions["D"].width = 18  # unit prices (e.g. 14,000,000)
+        ws.column_dimensions["E"].width = 16
         r = 4
         S = self.scalar
         S(ws, r, "Land area (m²)", "=in_site_land_area", NUM, "D_Land"); r += 1
@@ -870,6 +873,14 @@ class Builder:
     def cf_range(self, row: int, start_t: int = 0) -> str:
         return f"'Cash Flow'!${self.col(start_t)}${row}:${self.last_col}${row}"
 
+    @staticmethod
+    def _month_series(ws, row: int, last: int):
+        """One monthly row as a chart series: values from month 0 (column D) to `last`, name linked to the label in column A.
+        (Reading from column A would also pull in the Total and note columns and shift every point by two months.)"""
+        s = Series(Reference(ws, min_col=MONTH_COL0, max_col=last, min_row=row, max_row=row))
+        s.tx = SeriesLabel(strRef=StrRef(f"'{ws.title}'!$A${row}"))
+        return s
+
     def _style(self, ch, colors, y_fmt='#,##0,,"M";(#,##0,,"M")'):
         """Visible axes (openpyxl hides them by default in recent Excel), brand palette, M-formatted values."""
         ch.x_axis.delete = False
@@ -949,8 +960,7 @@ class Builder:
         lc = LineChart()
         lc.title, lc.height, lc.width = "Cumulative cash flow, net equity and senior debt (monthly)", 7.5, 16
         for key in ("cumunlev", "cumlev", "s_close"):
-            rr = self.cf_rows[key]
-            lc.add_data(Reference(cfws, min_col=1, max_col=last, min_row=rr, max_row=rr), titles_from_data=True, from_rows=True)
+            lc.series.append(self._month_series(cfws, self.cf_rows[key], last))
         lc.set_categories(mcat)
         lc.x_axis.tickLblSkip = 6
         ws.add_chart(self._style(lc, [BLUE_, AQUA, ORANGE]), f"A{anchor_row + 16}")
@@ -958,20 +968,23 @@ class Builder:
             sws = self.wb["Sales"]
             bc = BarChart()
             bc.title, bc.height, bc.width = "Units sold per month", 7.5, 16
-            rr = self.sales_rows["sold"]
-            bc.add_data(Reference(sws, min_col=1, max_col=last, min_row=rr, max_row=rr), titles_from_data=True, from_rows=True)
+            bc.series.append(self._month_series(sws, self.sales_rows["sold"], last))
             bc.set_categories(Reference(sws, min_col=MONTH_COL0, max_col=last, min_row=4))
             bc.x_axis.tickLblSkip = 6
-            ws.add_chart(self._style(bc, [BLUE_], y_fmt="0.0"), f"F{anchor_row + 16}")
+            bc.varyColors = False  # one series: one color, not one legend entry per month
+            self._style(bc, [BLUE_], y_fmt="0.0")
+            bc.legend = None
+            ws.add_chart(bc, f"F{anchor_row + 16}")
         else:
             rws = self.wb["Rental"]
             bc = LineChart()
             bc.title, bc.height, bc.width = "Monthly NOI", 7.5, 16
-            rr = self.rent_rows["noi"]
-            bc.add_data(Reference(rws, min_col=1, max_col=last, min_row=rr, max_row=rr), titles_from_data=True, from_rows=True)
+            bc.series.append(self._month_series(rws, self.rent_rows["noi"], last))
             bc.set_categories(Reference(rws, min_col=MONTH_COL0, max_col=last, min_row=4))
             bc.x_axis.tickLblSkip = 6
-            ws.add_chart(self._style(bc, [BLUE_], y_fmt='#,##0.0,,"M"'), f"F{anchor_row + 16}")
+            self._style(bc, [BLUE_], y_fmt='#,##0.0,,"M"')
+            bc.legend = None
+            ws.add_chart(bc, f"F{anchor_row + 16}")
         cc = BarChart()
         cc.type = "bar"
         cc.title, cc.height, cc.width = "Total cost by category", 7.5, 16
@@ -1042,6 +1055,8 @@ class Builder:
         ws = self.sheet("Sensitivity", "6250D6")
         self.header(ws, "Sensitivity & scenarios (TerraMind engine snapshot)", "Values computed by TerraMind's engine at export. Re-export after major changes.")
         ws.column_dimensions["A"].width = 40
+        for col in "BCDEFGHIJKL":  # profit / peak equity reach nine digits
+            ws.column_dimensions[col].width = 16
         an = self.analysis or {}
         r = 4
         if an.get("status") != "ok":

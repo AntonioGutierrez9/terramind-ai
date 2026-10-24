@@ -251,7 +251,7 @@
   <tr><td><b>Overspending / runaway loops</b></td><td>Delegation depth 1; per-turn caps on specialists, tool calls, requests, tokens and USD; safe stop plus "Continue with higher limits" (user permission, capped at 4×)</td><td><code>test_specialist_call_limit_stops_the_turn</code>, <code>test_budget_limit_raises_before_spending</code>, live demo (Figure 9)</td></tr>
   <tr><td><b>Executing transactions</b></td><td>No payment, signing or lender tools exist. Status changes are only recorded, after confirmation</td><td>Code review: tool list in <code>docs/AGENTS_AND_TOOLS.md</code></td></tr>
 </table>
-<p><b>Result:</b> <code>pytest</code> → <b>67 passed</b> (37 engine, 17 safety, 9 accounts, documents &amp; translation, 4 Excel export) on the development machine. The fresh-clone dry run passed all 43 tests that existed at the time.</p>
+<p><b>Result:</b> <code>pytest</code> → <b>68 passed</b> (37 engine, 17 safety, 9 accounts, documents &amp; translation, 5 Excel export) on the development machine. A fresh-clone dry run on 24 Oct 2026 passed all 66 tests that existed then.</p>
 
 <h3>6.2 Defenses working (live)</h3>
 <div class="two">

@@ -50,3 +50,28 @@ def test_assumptions_carry_the_project_values():
 def test_rental_case_exports_rental_tab():
     wb, _ = _wb(CASES[2])
     assert wb["Rental"].sheet_state == "visible"
+
+
+def test_monthly_charts_start_at_month_zero_and_columns_fit_values():
+    """Regression: monthly chart series must start at column D (month 0), not pull in the Total/note columns,
+    the single-series units chart must not vary colors per month, and month columns must fit 9-digit negatives."""
+    import re
+    import zipfile
+    case = CASES[0]
+    proj = {"id": 1, "name": case["profile"]["name"], "profile": case["profile"], "assumptions": deepcopy(case["assumptions"]), "meta": {}}
+    data = export_project(proj, run_model(proj["profile"], proj["assumptions"]), None)
+    z = zipfile.ZipFile(io.BytesIO(data))
+    charts = {n: z.read(n).decode() for n in z.namelist() if n.startswith("xl/charts/chart")}
+    monthly = {n: x for n, x in charts.items() if "'Cash Flow'!$" in x or "'Sales'!$" in x or "Sales!$" in x}
+    assert monthly, "expected monthly charts"
+    checked = 0
+    for name, xml in monthly.items():
+        for ref in re.findall(r"<(?:c:)?val>\s*<(?:c:)?numRef>\s*<(?:c:)?f>([^<]+)</", xml):
+            assert re.search(r"!\$D\$\d+:", ref), f"{name}: series values {ref} should start at column D"
+            checked += 1
+    assert checked >= 4  # 3 cumulative lines + units sold
+    units = next(x for x in charts.values() if "Units sold per month" in x)
+    assert re.search(r'<(?:c:)?varyColors val="0"', units) and not re.search(r"<(?:c:)?legend>", units)
+    wb = load_workbook(io.BytesIO(data))
+    assert wb["Cash Flow"].column_dimensions["D"].width >= 14
+    assert wb["Development"].column_dimensions["D"].width >= 16 and wb["Sensitivity"].column_dimensions["C"].width >= 16

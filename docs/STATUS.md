@@ -24,7 +24,7 @@
 | Flexible model inputs | Sales phases, price phases, land installments, custom cash flows, construction curve; editors on Market/Budget; chat tools + what-if | 6 engine tests, `docs/evidence/schedule_tests.json` |
 | User-defined variables | Add new inputs on any page or by chat; 10 deterministic effect types; shown per page and in the Assumption Center | 2 engine tests, `docs/evidence/advisor_tests.json` |
 | Recommendations | Advisor tests levers on the full model, ranks by impact, flags fixes, combined package, one-click apply, AI action plan | `test_advisor_levers_are_computed_on_the_model_and_fixes_come_first` |
-| Excel model export | Live workbook (formulas linked to named Assumptions, iterative debt sizing with circuit breaker, charts); top-bar button + chat tool; verified in Microsoft Excel | `docs/evidence/excel_reconciliation.md`, `tests/test_excel_export.py`, `docs/samples/TerraMind_Polanco_financial_model_FICTIONAL.xlsx` |
+| Excel model export | Live workbook (formulas linked to named Assumptions, iterative debt sizing with circuit breaker, charts aligned to month 0; no `###` cells in Excel for the 3 demos); top-bar button + chat tool; verified in Microsoft Excel | `docs/evidence/excel_reconciliation.md`, `tests/test_excel_export.py`, `docs/samples/TerraMind_Polanco_financial_model_FICTIONAL.xlsx` |
 | Deliverables | README, `.env.example`, public repo, report.html (14 printed pages), slides.html (9 slides, reveal.js), fresh-clone dry run (47 s, 43 tests pass) | repo |
 
 ## Partially implemented (simpler working version, documented)

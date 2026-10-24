@@ -22,7 +22,7 @@ Recorded on 2026-10-24 from the real running app: a separate local server with a
 | Document upload + extraction | ✅ Real AI call | `sample_zoning_certificate_FICTIONAL.pdf` uploaded; the Document agent extracted facts and proposed values pending approval |
 | Development config, budget, revenues, financing | ✅ Real | Each page shown briefly |
 | Financial dashboard (IRR, MOIC, NPV, cash flows) | ✅ Real | Equity IRR 24.9%, project IRR 25.2%, MOIC 1.68x, NPV MXN 122.5M |
-| Excel export | ✅ Real download | `TerraMind_Polanco_Residences_fictional.xlsx`, downloaded by clicking "Excel model". Its sheets (Assumptions, Construction, Sales, Cash Flow, Outputs + charts) were rendered by Microsoft Excel and shown in a viewer. This is not a live Excel window. |
+| Excel export | ✅ Real download | `TerraMind_Polanco_Residences_fictional.xlsx`, downloaded by clicking "Excel model" (sheets re-rendered after the chart/column-width fixes, same values). Its sheets (Assumptions, Construction, Sales, Cash Flow, Outputs + charts) were rendered by Microsoft Excel and shown in a viewer. This is not a live Excel window. |
 | "Workbook is linked" claim | ✅ Verified | In Microsoft Excel, hard cost above ground 24,000 → 26,400 in the Assumptions tab moved the workbook's equity IRR from 24.91% to 21.75% (matches `docs/evidence/excel_reconciliation.md`) |
 | Chatbot changes an assumption | ✅ Real AI call | "Increase construction costs by 10%." Hard cost 24,000 → 26,400/m² (and below-grade 14,000 → 15,400), shown in the chat, on the Budget page, then equity IRR **24.9% → 21.2%** on the Financial Model page |
 | Chatbot: complex cash-flow schedule | ✅ Real AI call, saved | "Update the model so sales are slower during the first six months and accelerate after construction is completed; keep the current pace in between." Saved 2 sales phases (1.5 units/month for 6 months; 5/month after delivery; 3/month in between). Equity IRR 21.22% → 21.59%. The recording script checked that the phases were saved before keeping the take. |
@@ -50,9 +50,15 @@ Recorded on 2026-10-24 from the real running app: a separate local server with a
 - [x] Plays correctly: full decode pass with no errors; loudness −16 LUFS
 - [x] AI cost of the recording runs: about $0.01 each (document analysis, 2 chat turns, translation, committee), on `gpt-6-luna`
 
-## Issues found while producing the video (not fixed, reported)
+## Issues found while producing the video (fixed)
 
-1. **Excel export, "Units sold per month" chart:** it shows a spike of 75 units at month 0, and its legend lists every month as a separate series. That chart was left out of the video.
-2. **Excel export, Cash Flow sheet:** some cells show `########` because the columns are too narrow for nine-digit negative values. The video shows the rows above them.
+1. **Excel export, monthly charts:** the series read each row from column A, so they also pulled in the Total and note columns.
+   - The "Units sold per month" chart showed the 75-unit total as a spike at month 0.
+   - The cumulative cash-flow and rental NOI charts were shifted by two months.
+   - The single-series units chart listed every month in its legend.
+
+   Fixed: series now start at month 0 (column D) with the label linked from column A; single-series charts use one color and no legend.
+2. **Excel export, `########` cells:** a full scan in Microsoft Excel found 134 cells across Cash Flow, Waterfall, Sensitivity and Development showing `###` because columns were too narrow. Monthly columns are now 14 wide, Sensitivity and Development value columns 16–18. The same scan of all three demo projects exported from the app now finds **0**.
+3. The video's Excel segment was re-rendered from the fixed export. A regression test (`test_monthly_charts_start_at_month_zero_and_columns_fit_values`) covers both bugs, and the sample in `docs/samples/` was regenerated.
 
 One small UX fix was made during production: the chat panel no longer flashes "Translating the conversation…" after every reply in English. It now appears only when the language is switched or a conversation loads.
