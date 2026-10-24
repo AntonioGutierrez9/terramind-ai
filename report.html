@@ -140,6 +140,7 @@
   <tr><td><b>Sustainability</b></td><td>Solar yield, tariffs, emission factors, measure costs</td><td>Web search → <code>SustainabilityFindings</code></td></tr>
   <tr><td><b>Document agent</b></td><td>Reads uploaded permits, zoning certificates, contracts and Excel models; answers questions</td><td>No tools → <code>DocumentAnalysis</code> (facts, permit, contract risks, value proposals). <b>Each value needs a verbatim quote that code finds in the file</b></td></tr>
   <tr><td><b>Improvement Advisor</b></td><td>What to change to improve the project</td><td>Code tests ~10–14 levers (land, pricing, sales, cost, schedule, design, leverage, sustainability) on the full model and ranks them, blocking issues first; the LLM writes the action plan from those computed impacts</td></tr>
+  <tr><td><b>Translator</b></td><td>Keeps the chat in the language the user selected (EN / ES)</td><td>No tools → <code>Translation</code>; cached per message, text already in the language never reaches the model</td></tr>
   <tr><td><b>Financial Modeling</b></td><td>Every metric, scenario and solver</td><td><b>Deterministic Python, no LLM</b> (27 unit tests)</td></tr>
   <tr><td><b>Investment Committee</b></td><td>Challenge, then decide</td><td>Underwriting challenger ‖ Capital &amp; Risk challenger (parallel) → Chair → code guardrails</td></tr>
   <tr><td><b>Asset Management</b></td><td>Actuals vs underwriting</td><td>Deterministic variance + reforecast → LLM commentary</td></tr>
@@ -297,7 +298,7 @@ Results will be added to <code>docs/evidence/user_test.md</code>.</div>
   <tr><td>Commercial, industrial and mixed-use use the shared area-based rent model</td><td>Lease-by-lease rent rolls; multi-component mixed-use with separate revenues and costs</td></tr>
   <tr><td>Single-hurdle waterfall; total absorption pace only</td><td>Multi-tier IRR hurdles and catch-up; absorption by unit type and price elasticity</td></tr>
   <tr><td>Sustainability values are preliminary estimates</td><td>Energy-model integration (EDGE app inputs) and measured utility data for operating assets</td></tr>
-  <tr><td>Single user, local SQLite</td><td>Multi-user roles (analyst / approver), Postgres, hosted deployment, lender and LP reporting packs</td></tr>
+  <tr><td>Private accounts and guest workspaces, but no shared projects or roles; local SQLite</td><td>Team workspaces with roles (analyst / approver), Postgres, hosted deployment, lender and LP reporting packs</td></tr>
 </table>
 <p class="small"><b>Disclaimer.</b> All demo projects (Polanco Residences, Del Valle Tower, Narvarte Green Rentals) and their inputs are fictional and illustrative. Researched figures (TIIE, comparables, cost index) are real search results with sources and dates, used only as proposals. TerraMind is decision support, not investment advice.</p>
 
