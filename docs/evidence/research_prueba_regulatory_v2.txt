@@ -1,0 +1,15 @@
+status ok 1.8s cost 0.032912699999999996 searches 3
+code: None | Parcel-specific zoning for Adolfo López Mateos 1964 could not be confirmed from the official interactive parcel map or a parcel-specific certificate. No zoning code is assigned here. The address is in Los Alpes, Álvaro Obregón, but neighborhood-level context is insufficient to establish this lot's development envelope.
+ - Zoning code | None | None  |  | not_found | None | https://sig.cdmx.gob.mx/sig_cdmx/
+ - Maximum stories | reg.max_stories | None  |  | not_found | None | https://datos.cdmx.gob.mx/es/dataset/uso-de-suelo
+ - Minimum open area | reg.min_open_area_pct | None  |  | not_found | None | https://datos.cdmx.gob.mx/es/dataset/uso-de-suelo
+ - Maximum FAR | reg.max_far | None  |  | not_found | None | 
+ - Maximum height | reg.max_height_m | None  |  | not_found | None | https://datos.cdmx.gob.mx/es/dataset/uso-de-suelo
+ - Minimum land per dwelling unit | reg.min_land_per_unit | None  |  | not_found | None | https://datos.cdmx.gob.mx/es/dataset/uso-de-suelo
+ - Maximum dwelling units | reg.max_units | None  |  | not_found | None | 
+ - Maximum underground levels | reg.max_underground_levels | None  |  | not_found | None | 
+ - Parking minimum per dwelling unit | reg.parking_min_per_unit | None  |  | not_found | None | https://paot.org.mx/centro/reglamentos/df/pdf/2024/RGTO_CONSTRUCCIONES_08_05_2024.pdf
+ - Parking maximum per dwelling unit | reg.parking_max_per_unit | None  |  | not_found | None | https://paot.org.mx/centro/reglamentos/df/pdf/2024/RGTO_CONSTRUCCIONES_08_05_2024.pdf
+ - Parcel-specific confirmation and certificate | None | None  | Consult SIGCDMX by exact parcel and obtain a Certificado Único de Zonificación de Uso del Suelo | preliminary | None | https://metropolis.cdmx.gob.mx/servicios/servicio/ciudad_mx
+ - Applicable building regulations | None | None  | Construction must comply with the applicable urban development program, construction regulations, technical standards, and other applicable requirements | verified | None | https://paot.org.mx/centro/reglamentos/df/pdf/2024/RGTO_CONSTRUCCIONES_08_05_2024.pdf
+proposals: []

@@ -243,3 +243,15 @@ def test_asset_management_flags_overrun_and_reforecasts():
     assert res["status"] == "ok"
     assert any(x["area"] == "Construction budget" and x["level"] == "red" for x in res["alerts"])
     assert res["updated"]["total_cost"] > base["metrics"]["total_cost"]
+
+
+# ---------------------------------------------------------------- zoning code parser
+def test_zoning_code_parser():
+    from engine.zoning import ZoningCodeError, parse_cdmx_code
+    z = parse_cdmx_code("H/4/20/M", land_area=1000)
+    assert (z["max_stories"], z["min_open_area_pct"], z["min_land_per_unit"], z["max_units"]) == (4, 20, 50, 20)
+    assert z["max_far"] == pytest.approx(3.2)
+    assert parse_cdmx_code("hm 6/30/z")["min_land_per_unit"] is None
+    assert parse_cdmx_code("HC-3-20-B", land_area=275)["max_units"] == 3  # 2.75 rounds up
+    with pytest.raises(ZoningCodeError):
+        parse_cdmx_code("residential six floors")

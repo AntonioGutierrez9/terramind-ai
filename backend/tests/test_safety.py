@@ -166,3 +166,13 @@ def test_undo_restores_previous_values_and_provenance(pid):
 def test_registry_marks_financing_and_regulation_material():
     assert REGISTRY["fin.senior_ltc_pct"]["material"]
     assert all(v["regulatory"] for k, v in REGISTRY.items() if k.startswith("reg."))
+
+
+def test_zoning_code_from_user_applies_and_from_chatbot_is_pending(pid):
+    r = store.apply_zoning_code(pid, "H/6/20/M", actor="chatbot")
+    assert r["pending"] and not r["applied"]
+    copy = store.duplicate_project(pid, "zoning test")
+    r = store.apply_zoning_code(copy, "H/6/20/M", actor="user")
+    a = store.get_project(copy)["assumptions"]
+    assert a["reg.max_stories"] == 6 and a["reg.min_land_per_unit"] == 50
+    assert store.get_project(copy)["meta"]["reg.max_stories"]["regulatory_reference"] == 6

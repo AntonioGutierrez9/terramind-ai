@@ -47,7 +47,7 @@ See `.env.example`. **Without a key, the whole financial platform still works.**
 
 ```bash
 python run.py --port 8001 --no-browser       # another port, no browser
-cd backend && python -m pytest -q            # 43 tests: engine math + safety controls
+cd backend && python -m pytest -q            # 45 tests: engine math + safety controls
 cd frontend && npm install && npm run dev    # frontend dev server on :5173 (proxies /api to :8000)
 cd frontend && npm run build                 # rebuild frontend/dist
 ```
@@ -60,7 +60,7 @@ To start from a clean database, delete `backend/data/terramind.db`. It is re-see
 
 1. **Portfolio**: three fictional CDMX projects with returns, equity concentration and early-warning alerts.
 2. Open **Polanco Residences → Financial Model**: equity IRR, MOIC, NPV, peak equity, monthly cash flows, scenarios, a tornado chart, an IRR heatmap, break-even, and reverse underwriting ("max land price for an 18% equity IRR").
-3. **Property & Zoning**: map, zoning research by the Regulatory agent (verified vs. preliminary, with sources), development capacity, and noncompliance flags if you override a legal limit.
+3. **Property & Zoning**: editable property facts, map, and zoning research by the Regulatory agent (verified vs. preliminary, from parcel level up to citywide rules, with sources). Type the zoning code from your certificate (e.g. `H/4/20/M`) and TerraMind converts it into legal limits deterministically. Also shows development capacity, and noncompliance flags if you override a legal limit.
 4. **Development Config**: unit mix editor, unit-mix optimizer, saved alternative configurations.
 5. **Market / Budget / Financing**: comparables (asking prices labeled as such), revenue forecast, detailed budget, S-curve schedule, capital stack, debt schedule on the actual monthly balance, covenants, equity waterfall.
 6. **Sustainability**: measures with lifecycle NPV, CO₂ and beneficiary-aware developer impact, plus a budget optimizer.

@@ -238,6 +238,23 @@ def set_unit_mix(ctx: RunContext[ManagerDeps], unit_types: list[UnitTypeIn], rea
 
 
 @agent.tool
+def apply_zoning_code(ctx: RunContext[ManagerDeps], code: str) -> dict:
+    """Parse a Mexico City zoning code the user provides (e.g. "H/4/20/M" from their Certificado Único de Zonificación)
+    into stories, open area, FAR and density. Regulatory limits are material, so they come back pending confirmation."""
+    p = _project(ctx)
+    try:
+        r = store.apply_zoning_code(p["id"], code, actor="chatbot")
+    except ValueError as exc:
+        return {"error": str(exc)}
+    if r.get("pending_id"):
+        ctx.deps.ctx.pending_ids.append(r["pending_id"])
+    ctx.deps.ctx.changes += r["applied"]
+    _log(ctx, "apply_zoning_code", f"{r['parsed']['code']}: pending {len(r['pending'])}", "property", pending_id=r.get("pending_id"))
+    return {"parsed": r["parsed"], "pending_user_confirmation": [{"key": x["key"], "new": x["new"]} for x in r["pending"]],
+            "applied": [{"key": x["key"], "new": x["new"]} for x in r["applied"]]}
+
+
+@agent.tool
 def undo_last_change(ctx: RunContext[ManagerDeps]) -> dict:
     """Undo the most recent batch of assumption changes for the open project."""
     p = _project(ctx)

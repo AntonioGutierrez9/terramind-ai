@@ -29,6 +29,7 @@ There are no cycles. Specialists have no delegation tool, so delegation depth is
 | `get_results(view)` | Engine outputs: summary, budget, schedule, covenants, sensitivity, scenarios, waterfall, design | no |
 | `update_assumptions(changes[], reason)` | Validated edits (`set` / `pct` / `add`). Ordinary edits apply now; **material edits become pending** | yes (through `store.apply_changes`) |
 | `update_profile(fields)` | Location, type, strategy, business model, checked against allowed choices | yes |
+| `apply_zoning_code(code)` | Parses a CDMX code such as `H/4/20/M` (deterministic, `engine/zoning.py`) into legal limits; regulatory, so always **pending** | pending only |
 | `scale_unit_sizes(target_average_size)` | "Change the average apartment size to 110 m²" | yes |
 | `set_unit_mix(unit_types[], reason)` | Replace the unit mix (shares must add to 100%) | yes |
 | `undo_last_change()` | Reverts the last batch of changes | yes |
@@ -46,7 +47,7 @@ There is **no tool that confirms pending changes or approves proposals.** Those 
 
 | Agent | Output schema | Post-processing (deterministic) |
 |---|---|---|
-| Regulatory & Development | `ZoningFindings`: findings tagged `verified` / `preliminary` / `not_found` with source URLs, plus a list of what is missing | Numeric `reg.*` findings become pending proposals. Approving one sets the legal reference used to detect overrides |
+| Regulatory & Development | `ZoningFindings`: findings tagged `verified` / `preliminary` / `not_found` and a **level** (parcel → corridor/colonia → alcaldía program → citywide rule) with source URLs, plus a list of what is missing | Numeric `reg.*` findings become pending proposals. A zoning code found by research is expanded by code into FAR and density. Approving one sets the legal reference used to detect overrides |
 | Market Research | `Comparables` (asking vs. transaction) | Comps without a URL are dropped. **Price per m², median and quartiles are computed by code.** The proposed base price is the median of included comps, labeled preliminary |
 | Cost & Construction | `CostBenchmark` (published benchmark / indicative) | Mapped to `cost.*` proposals, labeled "estimate, not a contractor quote" |
 | Financing | `RateBenchmark` (published rate / indicative / lender offer) | Anything labeled `lender_offer` is relabeled `indicative_assumption`, because a web page is not an offer |

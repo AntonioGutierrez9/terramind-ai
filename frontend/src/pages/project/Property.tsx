@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { Save, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCheck, ExternalLink, FlaskConical, PencilLine, ShieldAlert } from 'lucide-react'
-import { api, notifyProjectChanged, type Json } from '../../api'
+import { api, applyChanges, notifyProjectChanged, type Json } from '../../api'
 import ResearchButton from '../../components/a/ResearchButton'
 import SiteMap from '../../components/a/SiteMap'
 import { useProject } from '../../components/Layout'
 import { Callout, Card, FieldGroup, PageHead, StatusBadge } from '../../components/ui'
 import { area, money, num } from '../../format'
-import { useFetch } from '../../state'
+import { useFetch, useMeta, type ProjectData } from '../../state'
 
 const REG_KEYS = ['reg.max_stories', 'reg.min_open_area_pct', 'reg.max_far', 'reg.max_height_m', 'reg.min_land_per_unit', 'reg.max_units',
   'reg.max_underground_levels', 'reg.parking_min_per_unit', 'reg.parking_max_per_unit']
@@ -16,6 +17,10 @@ const LABEL: Record<string, string> = {
   ground_up: 'Ground-up development', acquisition: 'Acquisition', renovation: 'Renovation', capex: 'CAPEX improvement',
   repositioning: 'Repositioning', acquisition_renovation: 'Acquisition + renovation', owned: 'Owned', under_contract: 'Under contract',
   negotiating: 'Negotiating', identified: 'Identified',
+}
+
+const LEVEL: Record<string, string> = {
+  parcel: 'Parcel', corridor_or_colonia: 'Corridor / colonia', district_program: 'Alcaldía program', citywide_rule: 'Citywide rule',
 }
 
 function verBadge(v: string) {
@@ -27,7 +32,6 @@ export default function Property() {
   const nav = useNavigate()
   const p = data.project
   const prof = p.profile
-  const cur = prof.currency || 'MXN'
   const res = data.results
   const groundUp = (prof.strategy || 'ground_up') === 'ground_up'
   const { data: research } = useFetch<Json>(`/api/projects/${p.id}/research`)
@@ -68,20 +72,7 @@ export default function Property() {
         <Card title="Location" className="span2" bodyClass="">
           <SiteMap lat={prof.lat} lon={prof.lon} query={query} height={300} />
         </Card>
-        <Card title="Property facts">
-          <table className="t"><tbody>
-            {[['Address', prof.address], ['Neighborhood', prof.neighborhood], ['City', [prof.city, prof.state].filter(Boolean).join(', ')],
-              ['Land area', area(p.assumptions['site.land_area'], prof.area_unit || 'm²')],
-              ['Acquisition price', money(p.assumptions['site.land_price'], cur)],
-              ['Price per land m²', p.assumptions['site.land_price'] && p.assumptions['site.land_area'] ? money(p.assumptions['site.land_price'] / p.assumptions['site.land_area'], cur, false) : '—'],
-              ['Ownership', LABEL[prof.ownership_status] || prof.ownership_status], ['Strategy', LABEL[prof.strategy] || prof.strategy],
-              ['Property type', prof.property_type]].map(([k, v]) => (
-              <tr key={k as string}><td className="muted" style={{ width: 130 }}>{k}</td><td>{v || '—'}</td></tr>
-            ))}
-            {prof.details && Object.entries(prof.details).map(([k, v]) => <tr key={k}><td className="muted">{k}</td><td>{String(v)}</td></tr>)}
-          </tbody></table>
-          {prof.demo && <div style={{ marginTop: 8 }}><span className="badge demo">fictional demo case</span></div>}
-        </Card>
+        <PropertyFacts data={data} />
       </div>
 
       {groundUp && (
@@ -101,13 +92,14 @@ export default function Property() {
               {z.permitted_uses?.length > 0 && <div className="small"><b>Permitted uses:</b> {z.permitted_uses.join(' · ')}</div>}
               <div className="table-wrap">
                 <table className="t">
-                  <thead><tr><th>Parameter</th><th>Finding</th><th>Status</th><th>Source</th><th>Note</th></tr></thead>
+                  <thead><tr><th>Parameter</th><th>Finding</th><th>Status</th><th>Level</th><th>Source</th><th>Note</th></tr></thead>
                   <tbody>
                     {(z.findings || []).map((f: Json, i: number) => (
                       <tr key={i}>
                         <td style={{ fontWeight: 550 }}>{f.parameter}{f.key && <div className="tiny muted">{f.key}</div>}</td>
                         <td className="num">{f.value != null ? `${num(f.value, f.value % 1 ? 2 : 0)} ${f.unit || ''}` : ''}{f.value_text && <div className="small" style={{ textAlign: 'left' }}>{f.value_text}</div>}</td>
                         <td>{verBadge(f.verification)}</td>
+                        <td className="small">{f.level ? LEVEL[f.level] || f.level : <span className="muted">—</span>}</td>
                         <td className="small">{f.source_url ? <a href={f.source_url} target="_blank" rel="noreferrer">{f.source_title || 'link'} <ExternalLink size={10} /></a> : <span className="muted">—</span>}</td>
                         <td className="small muted" style={{ maxWidth: 320 }}>{f.note}</td>
                       </tr>
@@ -119,6 +111,8 @@ export default function Property() {
               {z.caveats?.length > 0 && <div className="tiny muted">Caveats: {z.caveats.join(' · ')}</div>}
             </div>
           )}
+
+          <ZoningCodeBox pid={p.id} current={prof.zoning_code} suggested={z?.parsed_zoning_code?.code || (z?.zoning_code ? String(z.zoning_code).split(/[(;,]/)[0].trim() : undefined)} />
 
           <div className="divider" />
           <h3 style={{ marginBottom: 8 }}>How do you want to proceed?</h3>
@@ -177,6 +171,146 @@ export default function Property() {
           <FieldGroup data={data} keys={SITE_KEYS} title="Site & acquisition" sub="Acquisition price and closing costs" cols={1} />
         </div>
       </div>
+    </div>
+  )
+}
+
+
+/* ---------- editable property facts ---------- */
+const FACT_FIELDS: [string, string][] = [['name', 'Project name'], ['address', 'Address'], ['neighborhood', 'Neighborhood (colonia)'],
+  ['municipality', 'Alcaldía / municipality'], ['city', 'City'], ['state', 'State'], ['country', 'Country']]
+const CHOICE_FIELDS: [string, string][] = [['ownership_status', 'Ownership'], ['strategy', 'Strategy'], ['property_type', 'Property type'],
+  ['business_model', 'Business model']]
+
+function PropertyFacts({ data }: { data: ProjectData }) {
+  const meta = useMeta()
+  const p = data.project
+  const prof = p.profile
+  const cur = prof.currency || 'MXN'
+  const [edit, setEdit] = useState(false)
+  const [draft, setDraft] = useState<Record<string, string>>({})
+  const [err, setErr] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const start = () => {
+    const d: Record<string, string> = {}
+    for (const [k] of [...FACT_FIELDS, ...CHOICE_FIELDS]) d[k] = prof[k] == null ? '' : String(prof[k])
+    d.land_area = p.assumptions['site.land_area'] == null ? '' : String(p.assumptions['site.land_area'])
+    d.land_price = p.assumptions['site.land_price'] == null ? '' : String(p.assumptions['site.land_price'])
+    setDraft(d); setErr(null); setEdit(true)
+  }
+  const save = async () => {
+    setSaving(true); setErr(null)
+    try {
+      const fields: Record<string, unknown> = {}
+      for (const [k] of [...FACT_FIELDS, ...CHOICE_FIELDS]) {
+        const v = (draft[k] ?? '').trim()
+        if (v !== (prof[k] == null ? '' : String(prof[k]))) fields[k] = v || null
+      }
+      if (['address', 'neighborhood', 'municipality', 'city', 'state', 'country'].some((k) => k in fields)) { fields.lat = null; fields.lon = null }
+      if (Object.keys(fields).length) await api.patch(`/api/projects/${p.id}/profile`, fields)
+      const changes = []
+      if (draft.land_area !== String(p.assumptions['site.land_area'] ?? '')) changes.push({ key: 'site.land_area', value: draft.land_area || null })
+      if (draft.land_price !== String(p.assumptions['site.land_price'] ?? '')) changes.push({ key: 'site.land_price', value: draft.land_price || null })
+      if (changes.length) {
+        const r = await applyChanges(p.id, changes, { reason: 'property facts' })
+        if (r.rejected?.length) { setErr(r.rejected.map((x: Json) => x.error).join('; ')); return }
+      }
+      notifyProjectChanged(p.id)
+      setEdit(false)
+    } catch (e) { setErr((e as Error).message) } finally { setSaving(false) }
+  }
+  const label = (v: string) => (LABEL[v] || v || '').replace(/_/g, ' ')
+
+  if (edit) {
+    return (
+      <Card title="Property facts" actions={<>
+        <button className="btn sm primary" disabled={saving} onClick={save}><Save size={13} /> {saving ? 'Saving…' : 'Save'}</button>
+        <button className="btn sm ghost" onClick={() => setEdit(false)}><X size={13} /></button></>}>
+        <div className="col" style={{ gap: 8 }}>
+          {FACT_FIELDS.map(([k, l]) => (
+            <label key={k} className="field">{l}<input className="input" value={draft[k] ?? ''} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })} /></label>
+          ))}
+          <div className="grid g2" style={{ gap: 8 }}>
+            <label className="field">Land area (m²)<input className="input" value={draft.land_area} onChange={(e) => setDraft({ ...draft, land_area: e.target.value })} /></label>
+            <label className="field">Acquisition price ({cur})<input className="input" value={draft.land_price} placeholder="e.g. 120000000 or 120m" onChange={(e) => setDraft({ ...draft, land_price: e.target.value })} /></label>
+          </div>
+          <div className="grid g2" style={{ gap: 8 }}>
+            {CHOICE_FIELDS.map(([k, l]) => (
+              <label key={k} className="field">{l}
+                <select className="input" value={draft[k] ?? ''} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })}>
+                  <option value="">—</option>
+                  {(meta.profile_choices[k] || []).map((c) => <option key={c} value={c}>{label(c)}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+          <div className="tiny muted">Changing the address re-locates the map. Changing the business model switches between the for-sale and rental models.</div>
+          {err && <div className="small" style={{ color: 'var(--critical)' }}>{err}</div>}
+        </div>
+      </Card>
+    )
+  }
+  return (
+    <Card title="Property facts" actions={<button className="btn sm" onClick={start}><PencilLine size={13} /> Edit</button>}>
+      <table className="t"><tbody>
+        {[['Address', prof.address], ['Neighborhood', prof.neighborhood], ['Alcaldía', prof.municipality],
+          ['City', [prof.city, prof.state].filter(Boolean).join(', ')],
+          ['Land area', area(p.assumptions['site.land_area'], prof.area_unit || 'm²')],
+          ['Acquisition price', money(p.assumptions['site.land_price'], cur)],
+          ['Price per land m²', p.assumptions['site.land_price'] && p.assumptions['site.land_area'] ? money(p.assumptions['site.land_price'] / p.assumptions['site.land_area'], cur, false) : '—'],
+          ['Zoning code', prof.zoning_code],
+          ['Ownership', label(prof.ownership_status)], ['Strategy', label(prof.strategy)],
+          ['Business model', label(prof.business_model)], ['Property type', prof.property_type]].map(([k, v]) => (
+          <tr key={k as string}><td className="muted" style={{ width: 130 }}>{k}</td><td>{v || '—'}</td></tr>
+        ))}
+        {prof.details && Object.entries(prof.details).map(([k, v]) => <tr key={k}><td className="muted">{k}</td><td>{String(v)}</td></tr>)}
+      </tbody></table>
+      {prof.demo && <div style={{ marginTop: 8 }}><span className="badge demo">fictional demo case</span></div>}
+    </Card>
+  )
+}
+
+/* ---------- zoning code from the certificate / SEDUVI map ---------- */
+function ZoningCodeBox({ pid, current, suggested }: { pid: number; current?: string; suggested?: string }) {
+  const [code, setCode] = useState(current || '')
+  const [busy, setBusy] = useState(false)
+  const [res, setRes] = useState<Json>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const apply = async () => {
+    setBusy(true); setErr(null); setRes(null)
+    try {
+      const r = await api.post(`/api/projects/${pid}/zoning-code`, { code })
+      setRes(r.parsed)
+      notifyProjectChanged(pid)
+    } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+  }
+  return (
+    <div className="card flat" style={{ padding: 12, marginTop: 12, background: 'var(--surface-2)' }}>
+      <div className="row between wrap" style={{ gap: 10 }}>
+        <div className="grow" style={{ minWidth: 260 }}>
+          <b>Have the zoning code?</b> <span className="small muted">Type it from the Certificado Único de Zonificación or the SEDUVI map
+            (format USE/STORIES/OPEN%/DENSITY). TerraMind converts it into legal limits deterministically; no AI involved.</span>
+        </div>
+        <div className="row" style={{ gap: 6 }}>
+          <input className="input" style={{ width: 160 }} value={code} placeholder="e.g. H/4/20/M" onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && apply()} />
+          <button className="btn primary sm" disabled={busy || !code.trim()} onClick={apply}>{busy ? 'Applying…' : 'Apply code'}</button>
+        </div>
+      </div>
+      {suggested && !current && suggested !== code && (
+        <div className="small" style={{ marginTop: 6 }}>
+          Research found <b>{suggested}</b> (preliminary, see the table above).{' '}
+          <button className="btn sm ghost" onClick={() => setCode(suggested)}>Use it as a starting point</button>
+        </div>
+      )}
+      {err && <div className="small" style={{ color: 'var(--critical)', marginTop: 6 }}>{err}</div>}
+      {res && (
+        <div className="small" style={{ marginTop: 8 }}>
+          <b>{res.code}</b> · {res.use_label} · max {res.max_stories} stories · min open area {res.min_open_area_pct}% · FAR {num(res.max_far, 2)}x
+          {res.min_land_per_unit ? <> · density {res.density_letter}: 1 dwelling per {res.min_land_per_unit} m² of land{res.max_units != null ? ` (max ${res.max_units} dwellings)` : ''}</> : null}
+          {res.notes?.map((n: string, i: number) => <div key={i} className="tiny muted">{n}</div>)}
+        </div>
+      )}
     </div>
   )
 }

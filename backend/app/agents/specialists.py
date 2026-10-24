@@ -42,6 +42,8 @@ class RegFinding(BaseModel):
     value_text: str | None = Field(None, description="Original wording, e.g. 'H/4/20/M' or 'commercial ground floor allowed'")
     unit: str | None = None
     verification: Literal["verified", "preliminary", "not_found"]
+    level: Literal["parcel", "corridor_or_colonia", "district_program", "citywide_rule"] | None = Field(
+        None, description="Geographic level the value applies to: this parcel, the street corridor / colonia, the alcaldia program, or a citywide rule")
     source_title: str | None = None
     source_url: str | None = None
     note: str = ""
@@ -149,7 +151,7 @@ def _agent(kind: str) -> Agent:
         name, out, prompt = SPECS[kind]
         _agents[kind] = Agent(
             build_model(), output_type=out, instructions=_prompt(prompt), name=name,
-            capabilities=[WebSearch(search_context_size="low")],
+            capabilities=[WebSearch(search_context_size="medium" if kind == "regulatory" else "low")],
             model_settings={"openai_reasoning_effort": "low"}, retries=1,
         )
     return _agents[kind]
@@ -160,7 +162,11 @@ def default_request(kind: str, project: dict) -> str:
     loc = ", ".join(x for x in (p.get("address"), p.get("neighborhood"), p.get("city"), p.get("state"), p.get("country")) if x)
     ptype = f"{p.get('property_type', 'residential')} {p.get('business_model', '').replace('_', ' ')}"
     if kind == "regulatory":
-        return f"Development regulations (zoning code, stories, open area, FAR, density, parking) for a {a.get('site.land_area') or '?'} m² lot at {loc}."
+        muni = f" (alcaldía {p['municipality']})" if p.get("municipality") else ""
+        code = f" The owner reports zoning code {p['zoning_code']}; confirm and interpret it." if p.get("zoning_code") else ""
+        return (f"Development regulations for a {a.get('site.land_area') or '?'} m² lot at {loc}{muni}: zoning code, stories, open area, "
+                f"FAR, density, parking and other restrictions. If parcel-level zoning is not readable online, report the zoning that the "
+                f"applicable Programa Delegacional/Parcial assigns to this colonia or street corridor, and the citywide rules that apply.{code}")
     if kind == "market":
         product = "new apartments for sale" if "sell" in ptype else "apartments for rent"
         return f"Comparable {product} ({a.get('dev.quality') or 'high'} quality) in {p.get('neighborhood') or ''}, {p.get('city') or ''}."
@@ -182,9 +188,29 @@ def _proposals(kind: str, payload: dict) -> list[dict]:
     if kind == "regulatory":
         for f in payload.get("findings", []):
             if f.get("key") in REGISTRY and f.get("value") is not None and f["verification"] != "not_found":
+                lvl = (f.get("level") or "").replace("_", " ")
                 props.append({"key": f["key"], "value": f["value"], "verification": f["verification"],
-                              "confidence": "high" if f["verification"] == "verified" else "low",
-                              "source_title": f.get("source_title"), "source_url": f.get("source_url"), "note": f.get("note")})
+                              "confidence": "high" if f["verification"] == "verified" else ("medium" if f.get("level") in ("parcel", "corridor_or_colonia") else "low"),
+                              "source_title": f.get("source_title"), "source_url": f.get("source_url"),
+                              "note": (f"[{lvl}] " if lvl else "") + (f.get("note") or "")})
+        # a zoning code found by research is expanded deterministically (FAR, density) with the same certainty label
+        code_finding = next((f for f in payload.get("findings", []) if f.get("value_text") and f["verification"] != "not_found"
+                             and _looks_like_code(f["value_text"])), None)
+        raw_code = payload.get("zoning_code") or (code_finding or {}).get("value_text")
+        parsed = _try_parse_code(raw_code)
+        if parsed:
+            have = {x["key"] for x in props}
+            ver = (code_finding or {}).get("verification") or "preliminary"
+            src = (code_finding or {}).get("source_url")
+            lvl = ((code_finding or {}).get("level") or "").replace("_", " ")
+            derived = [("reg.max_stories", parsed["max_stories"]), ("reg.min_open_area_pct", parsed["min_open_area_pct"]),
+                       ("reg.max_far", parsed["max_far"]), ("reg.min_land_per_unit", parsed.get("min_land_per_unit"))]
+            for key, val in derived:
+                if val is not None and key not in have:
+                    props.append({"key": key, "value": val, "verification": ver, "confidence": "medium" if ver == "verified" else "low",
+                                  "source_title": f"Derived by TerraMind from zoning code {parsed['code']}", "source_url": src,
+                                  "note": (f"[{lvl}] " if lvl else "") + f"Computed from {parsed['code']} (stories × (1 − open area); density per NGO 11)."})
+            payload["parsed_zoning_code"] = parsed
     elif kind == "cost":
         for b in payload.get("benchmarks", []):
             if b.get("key") in REGISTRY and b.get("value") is not None and b["verification"] != "not_found":
@@ -205,6 +231,21 @@ def _proposals(kind: str, payload: dict) -> list[dict]:
                           "confidence": "medium" if stats["n"] >= 5 else "low", "source_title": f"Median of {stats['n']} comparables (asking prices)",
                           "source_url": None, "note": "Computed by TerraMind from listed comparables; asking prices, not transactions."})
     return props
+
+
+def _looks_like_code(text: str) -> bool:
+    return _try_parse_code(text) is not None
+
+
+def _try_parse_code(text: str | None) -> dict | None:
+    from engine.zoning import parse_cdmx_code
+    if not text:
+        return None
+    candidate = re.split(r"[(;,]", str(text))[0].strip()
+    try:
+        return parse_cdmx_code(candidate)
+    except ValueError:
+        return None
 
 
 def postprocess(kind: str, raw: dict) -> dict:

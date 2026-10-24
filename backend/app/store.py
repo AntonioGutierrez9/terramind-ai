@@ -74,7 +74,7 @@ def list_projects() -> list[dict]:
 
 def update_profile(pid: int, fields: dict, actor: str = "user") -> dict:
     p = get_project(pid)
-    allowed = {"name", "country", "state", "city", "neighborhood", "address", "lat", "lon", "currency", "area_unit",
+    allowed = {"name", "country", "state", "city", "neighborhood", "municipality", "address", "lat", "lon", "currency", "area_unit", "zoning_code",
                "property_type", "strategy", "business_model", "ownership_status", "horizon_years", "details", "start_date"}
     bad = set(fields) - allowed
     if bad:
@@ -185,7 +185,7 @@ def apply_changes(pid: int, changes: list[dict], actor: str = "user", reason: st
             continue
         spec = REGISTRY.get(key, {})
         loosen, ref = is_loosening(key, new, meta)
-        material = bool(spec.get("material")) or loosen or (spec.get("regulatory") and old is not None)
+        material = bool(spec.get("material")) or loosen or bool(spec.get("regulatory"))
         item = {"key": key, "label": spec.get("label", key), "old": old, "new": new, "unit": spec.get("unit", ""),
                 "material": material, "regulatory_override": loosen, "legal_reference": ref}
         if material and not human:
@@ -495,3 +495,30 @@ def get_setting(key: str, default=None):
 def set_setting(key: str, value) -> None:
     with tx() as c:
         c.execute("INSERT OR REPLACE INTO settings(key,value) VALUES (?,?)", (key, dumps(value)))
+
+
+def apply_zoning_code(pid: int, code: str, actor: str = "user") -> dict:
+    """Parse a CDMX zoning code (from the user's certificate / SEDUVI map) and apply the implied legal limits.
+
+    User: applied directly and recorded as the legal reference for override detection.
+    Chatbot: material regulatory changes, so they come back pending like any other.
+    """
+    from engine.zoning import SOURCE_URL, parse_cdmx_code, zoning_code_changes
+    p = get_project(pid)
+    parsed = parse_cdmx_code(code, p["assumptions"].get("site.land_area"))
+    changes = zoning_code_changes(parsed)
+    note = f"Parsed from zoning code {parsed['code']}" + (f"; density {parsed['density_letter']} per Norma General de Ordenacion 11" if parsed.get("min_land_per_unit") else "")
+    extra = {c["key"]: {"verification": "from zoning code", "confidence": "high", "note": note, "regulatory_reference": c["value"],
+                        "source_title": "CDMX zoning code (entered by user); density table: NGO 11 (2005)", "source_url": SOURCE_URL}
+             for c in changes}
+    res = apply_changes(pid, changes, actor=actor, reason=f"zoning code {parsed['code']}", source="user (zoning code)" if actor == "user" else None,
+                        confirm_override=True, extra_meta=extra)
+    if actor == "user":
+        update_profile(pid, {"zoning_code": parsed["code"]}, actor=actor)
+        # record the reference even when a value was already identical
+        meta = deepcopy(get_project(pid)["meta"])
+        for k, m in extra.items():
+            meta.setdefault(k, {}).update({kk: vv for kk, vv in m.items()})
+        with tx() as c:
+            c.execute("UPDATE projects SET meta=? WHERE id=?", (dumps(meta), pid))
+    return {"parsed": parsed, **res}

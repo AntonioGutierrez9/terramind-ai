@@ -168,6 +168,15 @@ def proposal(pid: int, key: str, action: str):
     return store.resolve_proposal(pid, key, action == "approve", actor="user")
 
 
+@app.post("/api/projects/{pid}/zoning-code")
+def zoning_code(pid: int, body: dict):
+    from engine.zoning import ZoningCodeError
+    try:
+        return store.apply_zoning_code(pid, str(body.get("code", "")), actor="user")
+    except ZoningCodeError as exc:
+        raise HTTPException(422, str(exc))
+
+
 @app.post("/api/projects/{pid}/status")
 def status(pid: int, body: dict):
     store.set_status(pid, body["status"], body.get("in_portfolio"), actor="user")

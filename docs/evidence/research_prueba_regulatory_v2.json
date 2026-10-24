@@ -1,0 +1,240 @@
+{
+ "status": "ok",
+ "agent": "Regulatory & Development",
+ "from_cache": false,
+ "payload": {
+  "zoning_code": "HM/15/20/Z (preliminary corridor indication; not verified for lot 1964)",
+  "zoning_summary": "The address is in Los Alpes, Álvaro Obregón. An official PAOT enforcement resolution identifies HM 15/20/Z for Boulevard Adolfo López Mateos No. 2000, also in Los Alpes. This supports a preliminary street-area indication, not confirmation for No. 1964. The applicable district plan is Álvaro Obregón’s Programa Delegacional de Desarrollo Urbano. The parcel’s official certificate is needed to establish its binding zoning.",
+  "permitted_uses": [
+   "Habitacional mixto (mixed residential) is indicated by the nearby HM zoning; parcel-specific permitted uses remain unverified."
+  ],
+  "findings": [
+   {
+    "parameter": "Zoning code",
+    "key": null,
+    "value": null,
+    "value_text": "HM/15/20/Z",
+    "unit": null,
+    "verification": "preliminary",
+    "level": "corridor_or_colonia",
+    "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+    "source_url": "https://paot.org.mx/sasd02/ficheros/acuerdos/ac_pub/11043_RESOL_1321.pdf",
+    "note": "Official finding for a nearby address, not the subject parcel. Confirm frontage, block and parcel boundaries."
+   },
+   {
+    "parameter": "Maximum stories",
+    "key": "reg.max_stories",
+    "value": 15.0,
+    "value_text": null,
+    "unit": "stories",
+    "verification": "preliminary",
+    "level": "corridor_or_colonia",
+    "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+    "source_url": "https://paot.org.mx/sasd02/ficheros/acuerdos/ac_pub/11043_RESOL_1321.pdf",
+    "note": "The resolution describes HM 15/20/Z as allowing 15 maximum construction levels at No. 2000; not verified for No. 1964."
+   },
+   {
+    "parameter": "Minimum open area",
+    "key": "reg.min_open_area_pct",
+    "value": 20.0,
+    "value_text": null,
+    "unit": "percent",
+    "verification": "preliminary",
+    "level": "corridor_or_colonia",
+    "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+    "source_url": "https://paot.org.mx/sasd02/ficheros/acuerdos/ac_pub/11043_RESOL_1321.pdf",
+    "note": "The resolution describes 20% minimum open area for the nearby HM 15/20/Z zoning."
+   },
+   {
+    "parameter": "Maximum FAR",
+    "key": "reg.max_far",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "corridor_or_colonia",
+    "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+    "source_url": "https://paot.org.mx/sasd02/ficheros/ac_pub/11043_RESOL_1321.pdf",
+    "note": "The source reports stories and open area, but no FAR. No FAR value confirmed for this parcel."
+   },
+   {
+    "parameter": "Maximum height",
+    "key": "reg.max_height_m",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "corridor_or_colonia",
+    "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+    "source_url": "https://paot.org.mx/sasd02/ficheros/ac_pub/11043_RESOL_1321.pdf",
+    "note": "The nearby zoning is expressed in levels, not a sourced height in metres."
+   },
+   {
+    "parameter": "Minimum land per dwelling",
+    "key": "reg.min_land_per_unit",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "citywide_rule",
+    "source_title": "Norma General de Ordenación 11: Cálculo del número de viviendas permitidas e intensidad de construcción",
+    "source_url": "https://paot.org.mx/centro/normas_a/2015/NGO_11_08_04_2005.pdf",
+    "note": "Norma 11 says dwelling count depends on the density letter in the applicable program. The nearby code uses Z; a numeric land-per-dwelling figure for Z was not established from the accessible source."
+   },
+   {
+    "parameter": "Maximum dwelling units",
+    "key": "reg.max_units",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "corridor_or_colonia",
+    "source_title": "Norma General de Ordenación 11: Cálculo del número de viviendas permitidas e intensidad de construcción",
+    "source_url": "https://paot.org.mx/centro/normas_a/2015/NGO_11_08_04_2005.pdf",
+    "note": "No parcel-specific maximum established. Unit count depends on the parcel’s binding zoning, land area and applicable rules."
+   },
+   {
+    "parameter": "Maximum underground levels",
+    "key": "reg.max_underground_levels",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "parcel",
+    "source_title": null,
+    "source_url": null,
+    "note": "No sourced parcel-specific underground-level limit found."
+   },
+   {
+    "parameter": "Minimum parking per dwelling",
+    "key": "reg.parking_min_per_unit",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "preliminary",
+    "level": "citywide_rule",
+    "source_title": "Acuerdo modifying numeral 1.2, Estacionamientos, of the Norma Técnica Complementaria para el Proyecto Arquitectónico",
+    "source_url": "https://oat.com.mx/wp-content/uploads/2019/02/aprovechamientoCajones.pdf",
+    "note": "The 2017 reform replaced mandatory minimum parking counts with maximums; no minimum per dwelling is stated here."
+   },
+   {
+    "parameter": "Maximum parking per dwelling",
+    "key": "reg.parking_max_per_unit",
+    "value": null,
+    "value_text": null,
+    "unit": null,
+    "verification": "not_found",
+    "level": "citywide_rule",
+    "source_title": "Acuerdo modifying numeral 1.2, Estacionamientos, of the Norma Técnica Complementaria para el Proyecto Arquitectónico",
+    "source_url": "https://oat.com.mx/wp-content/uploads/2019/02/aprovechamientoCajones.pdf",
+    "note": "A maximum is set by building use/type in the technical standard; a per-dwelling numeric maximum cannot be stated without the project’s applicable category and details."
+   },
+   {
+    "parameter": "Applicable district program and general regulations",
+    "key": null,
+    "value": null,
+    "value_text": "Programa Delegacional de Desarrollo Urbano de Álvaro Obregón; Normas Generales de Ordenación apply subject to parcel zoning.",
+    "unit": null,
+    "verification": "preliminary",
+    "level": "district_program",
+    "source_title": "Programa Delegacional de Desarrollo Urbano de Álvaro Obregón",
+    "source_url": "https://paot.org.mx/centro/programas/df/pdf/2021/PROGRAMA%20DESARROLLO%20URBANO%20AO%20GODF_10_05_2011_02.pdf",
+    "note": "District-program source; the map/code for this precise lot was not independently confirmed."
+   },
+   {
+    "parameter": "Official parcel zoning confirmation",
+    "key": null,
+    "value": null,
+    "value_text": "The official zoning certificate is the controlling document for a specific property.",
+    "unit": null,
+    "verification": "preliminary",
+    "level": "citywide_rule",
+    "source_title": "SEDUVI program map note identifying the zoning certificate as the official document for a specific property",
+    "source_url": "https://www.data.seduvi.cdmx.gob.mx/portal/docs/programas/PPDU/PPDU_Planos_Divulgacion/PPDU_Plano_Divul_BJ_Simon_Ticumac.pdf",
+    "note": "The cited note is published on an official SEDUVI map and explains the certificate’s role; the certificate for this lot was not found."
+   }
+  ],
+  "missing": [
+   "Obtain the Certificado Único de Zonificación de Uso del Suelo for Adolfo López Mateos 1964; it must confirm the exact lot zoning, permitted uses, story count, open area, density and any parcel-specific notes. You can type the certificate’s zoning code into TerraMind for interpretation.",
+   "Confirm cadastral parcel boundaries and whether the subject lot is governed by a corridor zoning or another mapped designation.",
+   "Confirm parcel-specific FAR, maximum units, underground levels, height in metres, and any heritage, environmental, road-alignment or other restrictions from the certificate and applicable records.",
+   "For parking maximum, identify the proposed building use and category in the current applicable Norma Técnica Complementaria."
+  ],
+  "caveats": [
+   "HM 15/20/Z is supported by an official PAOT resolution for nearby No. 2000, not explicitly for No. 1964; treat it only as a preliminary corridor clue.",
+   "A property listing also advertises HM15/20/Z for a nearby Periférico lot, but it is secondary and was not used as parcel-level verification.",
+   "No parcel-level official zoning record was accessible in this search."
+  ],
+  "suspicious_fields": []
+ },
+ "proposals": [
+  {
+   "key": "reg.max_stories",
+   "value": 15,
+   "agent": "regulatory",
+   "verification": "preliminary",
+   "confidence": "medium",
+   "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+   "source_url": "https://paot.org.mx/sasd02/ficheros/acuerdos/ac_pub/11043_RESOL_1321.pdf",
+   "note": "[corridor or colonia] The resolution describes HM 15/20/Z as allowing 15 maximum construction levels at No. 2000; not verified for No. 1964.",
+   "status": "pending",
+   "proposed_at": "2026-10-24T05:27:37+00:00",
+   "warnings": []
+  },
+  {
+   "key": "reg.min_open_area_pct",
+   "value": 20.0,
+   "agent": "regulatory",
+   "verification": "preliminary",
+   "confidence": "medium",
+   "source_title": "PAOT resolution concerning Boulevard Adolfo López Mateos No. 2000, Colonia Los Alpes",
+   "source_url": "https://paot.org.mx/sasd02/ficheros/acuerdos/ac_pub/11043_RESOL_1321.pdf",
+   "note": "[corridor or colonia] The resolution describes 20% minimum open area for the nearby HM 15/20/Z zoning.",
+   "status": "pending",
+   "proposed_at": "2026-10-24T05:27:37+00:00",
+   "warnings": []
+  }
+ ],
+ "usage": {
+  "agent": "Regulatory & Development",
+  "requests": 1,
+  "input_tokens": 20041,
+  "cached_tokens": 0,
+  "output_tokens": 2139,
+  "web_searches": 2,
+  "cost_usd": 0.0230736,
+  "seconds": 25.66
+ },
+ "turn_usage": {
+  "run_id": "dd881311a2aa",
+  "model": "gpt-6-luna",
+  "by_agent": [
+   {
+    "agent": "Regulatory & Development",
+    "requests": 1,
+    "input_tokens": 20041,
+    "cached_tokens": 0,
+    "output_tokens": 2139,
+    "web_searches": 2,
+    "cost_usd": 0.0230736,
+    "seconds": 25.66
+   }
+  ],
+  "total": {
+   "requests": 1,
+   "input_tokens": 20041,
+   "cached_tokens": 0,
+   "output_tokens": 2139,
+   "web_searches": 2,
+   "cost_usd": 0.0230736
+  },
+  "limits": {
+   "max_specialist_calls": 2,
+   "max_tool_calls": 12,
+   "max_requests": 10,
+   "max_tokens": 250000,
+   "max_usd": 0.05
+  },
+  "seconds": 25.7
+ }
+}
