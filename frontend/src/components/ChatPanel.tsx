@@ -22,7 +22,7 @@ const SUGGESTIONS_HOME = [
 const PAGE_LABEL: Record<string, string> = {
   property: 'Property & Zoning', design: 'Development Config', market: 'Market & Revenue', budget: 'Budget & Schedule',
   financing: 'Financing', model: 'Financial Model', sustainability: 'Sustainability', committee: 'Investment Committee',
-  asset: 'Asset Management', assumptions: 'Assumption Center', portfolio: 'Portfolio',
+  asset: 'Asset Management', assumptions: 'Assumption Center', portfolio: 'Portfolio', advisor: 'Recommendations', documents: 'Documents',
 }
 
 /* ---------- tiny markdown (bold, bullets, paragraphs) ---------- */
@@ -251,6 +251,7 @@ function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string, mult?: n
       )}
       {x.links?.length > 0 && x.project_id && (
         <div className="row wrap" style={{ gap: 6 }}>
+          {x.links.includes('excel') && <a className="badge good" href={`/api/projects/${x.project_id}/export.xlsx`}>Download Excel model ↓</a>}
           {x.links.filter((l: string) => PAGE_LABEL[l] || l.startsWith('project:')).map((l: string) => (
             <Link key={l} className="badge" to={l.startsWith('project:') ? `/p/${l.split(':')[1]}/property` : `/p/${x.project_id}/${l}`}>
               Open {l.startsWith('project:') ? 'new project' : PAGE_LABEL[l]} →

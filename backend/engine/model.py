@@ -577,14 +577,14 @@ def equity_waterfall(contrib: list[float], dist: list[float], sponsor_share: flo
 
 # --------------------------------------------------------------------------- user-defined variables
 def _apply_custom_vars(a: dict, mode: str, design: dict, costs: dict, rev: dict, cats: dict, marks: dict,
-                       con_start: int, con_months: int, n: int) -> None:
+                       con_start: int, con_months: int, n: int, sales_collections: list | None = None) -> None:
     """Deterministic effects of user-defined variables (see engine/custom_vars.py). Writes into the custom cost
     bucket, the revenue inflows and the budget rows."""
     vars_ = [v for v in a.get("custom_variables") or [] if v["effect"] not in ("info", "price_pct") and isinstance(v.get("value"), (int, float))]
     if not vars_:
         return
     curve = costs.get("curve") or []
-    sales_collections = list(rev["inflows"])  # before user-defined income
+    sales_collections = list(sales_collections if sales_collections is not None else rev["inflows"])
     sold = rev.get("sold") or []
     units = design.get("units") or 0
 
@@ -681,6 +681,7 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
         horizon = rev["exit_month"]
     sale_marks = {"closing": 0, "construction_start": con_start, "delivery": delivery,
                   "sales_start": rev.get("sales_start", delivery) if mode == "sale" else rev.get("lease_start", delivery)}
+    sales_only_inflows = list(rev["inflows"])  # % of collections applies to sales collections only (not custom income)
     custom_resolved = []
     for cf in custom:
         m = anchor_month(cf.get("anchor"), cf.get("offset"), sale_marks) if cf.get("anchor") else int(cf.get("month") or 0)
@@ -696,7 +697,7 @@ def run_model(profile: dict, assumptions: dict, overrides: dict | None = None) -
                                   "basis": f"M{cf['resolved_month']} (user-defined)"})
         else:
             _add(rev["inflows"], cf["resolved_month"], float(cf["amount"]))
-    _apply_custom_vars(a, mode, design, costs, rev, cats, sale_marks, con_start, con_months, n)
+    _apply_custom_vars(a, mode, design, costs, rev, cats, sale_marks, con_start, con_months, n, sales_only_inflows)
     _pad(*cats.values(), commercial, rev["inflows"], length=n)
     if mode == "sale":
         _pad(rev["sold"], rev["contract"], length=n)

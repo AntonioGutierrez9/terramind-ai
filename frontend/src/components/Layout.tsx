@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import {
   Banknote, BarChart3, Bot, Building2, ClipboardCheck, Coins, Gauge, History, Landmark, LayoutDashboard, Leaf, ListChecks,
-  FileText, Lightbulb, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
+  FileSpreadsheet, FileText, Lightbulb, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
 } from 'lucide-react'
 import { Welcome, useAuth } from '../auth'
 import { api, notifyProjectChanged, onProjectChanged, type Json } from '../api'
@@ -89,6 +89,11 @@ export default function Layout() {
           </select>
           {current && <ProjectBadges p={current} />}
           <div className="grow" />
+          {pid && current?.model_status === 'ok' && (
+            <a className="btn" href={`/api/projects/${pid}/export.xlsx`} title="Download a live Excel financial model (formulas linked to an Assumptions tab)">
+              <FileSpreadsheet size={15} /> Excel model
+            </a>
+          )}
           {pid && <UndoButton pid={pid} />}
           <AccountMenu />
           <button className="btn" onClick={() => setChatOpen((o) => !o)}>

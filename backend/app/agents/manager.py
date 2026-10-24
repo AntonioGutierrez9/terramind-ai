@@ -382,6 +382,19 @@ def remove_custom_variable(ctx: RunContext[ManagerDeps], key_or_label: str, reas
 
 
 @agent.tool
+def export_excel_model(ctx: RunContext[ManagerDeps]) -> dict:
+    """Prepare the download of the project as a live Excel financial model (Assumptions tab driving the development
+    program, construction and sales schedules, cash flow, financing, waterfall, budget and outputs with charts)."""
+    p = _project(ctx)
+    res = services.results(p)
+    if res.get("status") != "ok":
+        return {"error": "Complete the model first: " + ", ".join(res.get("missing_labels") or [])}
+    _log(ctx, "export_excel_model", "Excel model ready to download", "excel")
+    return {"download_url": f"/api/projects/{p['id']}/export.xlsx",
+            "message": "A download link is shown below this answer. Every number in the file is a formula linked to the Assumptions tab."}
+
+
+@agent.tool
 def recommend_improvements(ctx: RunContext[ManagerDeps]) -> dict:
     """Ranked recommendations to improve the project: blocking issues and levers (land, pricing, sales strategy, cost,
     schedule, design, financing, sustainability), each tested on the full model with its impact on equity IRR, profit

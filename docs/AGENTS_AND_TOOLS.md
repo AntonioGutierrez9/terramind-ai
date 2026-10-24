@@ -37,6 +37,7 @@ There are no cycles. Specialists have no delegation tool, so delegation depth is
 | `set_land_payments(payments[], reason)` | Land paid in installments (must add to 100%) | yes |
 | `set_custom_cash_flows(flows[], reason)` | Any one-off cost or revenue the standard inputs do not cover | yes |
 | `add_custom_variable(variable, reason)` / `remove_custom_variable(key)` | New user-defined inputs with a deterministic effect (cost per unit / m², % of hard cost or of collections, monthly or one-off cost/income, income per unit sold, price %, or tracked only) | yes |
+| `export_excel_model()` | Link to download the live Excel model (`app/excel_export.py`) | no |
 | `recommend_improvements()` | Ranked levers tested on the full model, blocking issues first, plus a combined package (`engine/advisor.py`) | no |
 | `apply_recommendation(lever_id)` | Applies a lever or the package (material changes stay pending) | yes |
 | `undo_last_change()` | Reverts the last batch of changes | yes |

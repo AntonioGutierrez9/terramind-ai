@@ -326,6 +326,21 @@ def apply_variant(pid: int, vid: int):
                                reason=f"applied saved configuration '{v['name']}'")
 
 
+@app.get("/api/projects/{pid}/export.xlsx")
+def export_xlsx(pid: int):
+    """Download the project as a live Excel financial model (formulas linked to an Assumptions tab)."""
+    from fastapi.responses import Response
+    from .excel_export import export_project
+    p = store.get_project(pid)
+    res = services.results(p)
+    if res.get("status") != "ok":
+        raise HTTPException(422, "Complete the model before exporting: " + ", ".join(res.get("missing_labels") or res.get("errors") or []))
+    data = export_project(p, res, services.full_analysis(p))
+    safe = re.sub(r"[^\w\-]+", "_", p["name"]).strip("_")[:60] or "project"
+    return Response(content=data, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f'attachment; filename="TerraMind_{safe}.xlsx"'})
+
+
 @app.get("/api/projects/{pid}/recommendations")
 def recommendations(pid: int):
     return services.recommendations(store.get_project(pid))
