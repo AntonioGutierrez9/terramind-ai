@@ -1,0 +1,235 @@
+{
+  "project_id": 7,
+  "documents": [
+    {
+      "file": "sample_zoning_certificate_FICTIONAL.pdf",
+      "seconds": 7.5,
+      "doc_id": 1,
+      "doc_type": "zoning_certificate",
+      "summary": "The document identifies itself as a fictional demonstration and explicitly states that it is not valid, so it should not be relied on as an official zoning entitlement. It describes a fictional 1,800 m² residential property in Polanco V Sección with zoning code H/8/25/M, allowing up to 8 levels, a maximum height of 28.00 m, and requiring at least 25% open area. It states a density of one dwelling per 50.0 m² of land, permits up to 4 underground levels, and caps parking at 2 spaces per dwelling. The document also says it is not a construction license.",
+      "zoning_code": "H/8/25/M",
+      "accepted": [
+        [
+          "site.land_area",
+          1800.0
+        ],
+        [
+          "reg.max_stories",
+          8
+        ],
+        [
+          "reg.min_open_area_pct",
+          25.0
+        ],
+        [
+          "reg.max_height_m",
+          28.0
+        ],
+        [
+          "reg.min_land_per_unit",
+          50.0
+        ],
+        [
+          "reg.max_underground_levels",
+          4
+        ],
+        [
+          "reg.parking_max_per_unit",
+          2.0
+        ],
+        [
+          "reg.max_far",
+          6.0
+        ]
+      ],
+      "rejected": [],
+      "contract_risks": [],
+      "suspicious_fields": [],
+      "usage": {
+        "requests": 1,
+        "input_tokens": 3321,
+        "cached_tokens": 0,
+        "output_tokens": 725,
+        "web_searches": 0,
+        "cost_usd": 0.0006946
+      }
+    },
+    {
+      "file": "sample_developer_model_FICTIONAL.xlsx",
+      "seconds": 12.0,
+      "doc_id": 2,
+      "doc_type": "financial_model",
+      "summary": "The workbook contains assumptions for a fictional residential development on an 1,800 m² site, including land acquisition, sales, construction costs, schedule, and bridge financing. Relative to the project’s current assumptions, it states a higher land price and sale price, higher construction costs and sales commission, lower efficiency and absorption, a longer schedule, and a higher bridge-credit percentage. The Results sheet reports a model-calculated equity IRR of 21.4% and profit of MXN 251 million; these are model outputs, not proposed assumptions. The workbook’s assumptions and outputs are unverified.",
+      "zoning_code": null,
+      "accepted": [
+        [
+          "site.land_area",
+          1800.0
+        ],
+        [
+          "site.land_price",
+          278000000.0
+        ],
+        [
+          "reg.max_stories",
+          8
+        ],
+        [
+          "dev.stories",
+          8
+        ],
+        [
+          "dev.efficiency_pct",
+          81.0
+        ],
+        [
+          "rev.price_per_area",
+          112000.0
+        ],
+        [
+          "rev.absorption_per_month",
+          2.6
+        ],
+        [
+          "cost.hard_per_area",
+          25500.0
+        ],
+        [
+          "cost.below_grade_per_area",
+          14800.0
+        ],
+        [
+          "sch.construction_months",
+          26
+        ],
+        [
+          "sch.predev_months",
+          9
+        ],
+        [
+          "fin.senior_ltc_pct",
+          50.0
+        ],
+        [
+          "fin.senior_spread_pct",
+          3.75
+        ],
+        [
+          "rev.commission_pct",
+          3.5
+        ]
+      ],
+      "rejected": [],
+      "contract_risks": [],
+      "suspicious_fields": [],
+      "usage": {
+        "requests": 2,
+        "input_tokens": 7842,
+        "cached_tokens": 3210,
+        "output_tokens": 2106,
+        "web_searches": 0,
+        "cost_usd": 0.0015483000000000003
+      }
+    },
+    {
+      "file": "sample_land_purchase_contract_FICTIONAL.docx",
+      "seconds": 9.5,
+      "doc_id": 3,
+      "doc_type": "contract",
+      "summary": "This is a fictional Spanish-language promise to purchase agreement between Inmobiliaria Ejemplo, S.A. de C.V. as seller and Fondo Demostración TerraMind, S.A.P.I. de C.V. as buyer, concerning a stated 1,800.00 m² parcel in Polanco V Sección. The stated purchase price is MXN 265,000,000, with a 10% advance described as non-refundable under any circumstances and the remaining 90% due upon execution of the deed. The deed deadline is January 30, 2027. The agreement contains significant buyer risks: broad acceptance of the property's condition and waivers for hidden defects, contamination, and area discrepancies, plus a 20% price penalty for buyer default. This is decision support, not legal advice; the buyer should obtain counsel review and due diligence before signing or funding.",
+      "zoning_code": null,
+      "accepted": [
+        [
+          "site.land_area",
+          1800.0
+        ],
+        [
+          "site.land_price",
+          265000000.0
+        ]
+      ],
+      "rejected": [],
+      "contract_risks": [
+        [
+          "high",
+          "TERCERA",
+          "The 10% advance is non-refundable under any circumstances, with no stated carve-outs for seller default, title defects, failed due diligence, financing failure, or unmet conditions."
+        ],
+        [
+          "high",
+          "QUINTA",
+          "Buyer accepts the property as-is and waives claims for hidden defects, soil contamination, and area discrepancies, creating material environmental, physical, and measurement exposure."
+        ],
+        [
+          "high",
+          "SEXTA",
+          "A 20% of price penalty applies to buyer default; the excerpt does not state a reciprocal seller remedy or limit how the penalty interacts with the advance."
+        ],
+        [
+          "medium",
+          "CUARTA",
+          "A fixed deed deadline is provided without stated extensions or consequences if approvals, title matters, or other closing prerequisites are delayed."
+        ]
+      ],
+      "suspicious_fields": [],
+      "usage": {
+        "requests": 1,
+        "input_tokens": 3371,
+        "cached_tokens": 0,
+        "output_tokens": 1430,
+        "web_searches": 0,
+        "cost_usd": 0.0010520999999999998
+      }
+    }
+  ],
+  "qa": {
+    "answer": "The contract states that the 10% advance paid at signing is non-refundable under any circumstances. If the buyer cannot close, the seller may also characterize that as buyer default and seek a contractual penalty equal to 20% of the purchase price; the text does not say whether that penalty is in addition to, or instead of, retaining the deposit. This creates potentially substantial and unclear exposure. This is decision support, not legal advice.\n\n**Buyer-risk clauses**\n- **High — Deposit forfeiture (Clause Three):** The 10% advance is expressly non-refundable “under any circumstances,” with no stated exception if closing fails for reasons outside the buyer’s control. Practical suggestion: ask counsel to negotiate refund rights for specified contingencies and clarify how the deposit is held and applied.\n- **High — Broad condition/waiver (Clause Five):** Buyer accepts the property as-is and waives claims for hidden defects, soil contamination, or area discrepancies. Practical suggestion: seek due-diligence access, representations and warranties, and appropriate remedies or termination rights for material findings.\n- **High — Additional 20% penalty (Clause Six):** On buyer default, ",
+    "quotes": [
+      {
+        "quote": "Un anticipo del 10% a la firma de este contrato, no reembolsable bajo ninguna circunstancia, y el 90% restante a la firma de la escritura.",
+        "location": "Clause Three — Forma de pago",
+        "verified": true
+      },
+      {
+        "quote": "La escritura deberá firmarse a más tardar el 30 de enero de 2027.",
+        "location": "Clause Four — Plazo",
+        "verified": true
+      },
+      {
+        "quote": "La COMPRADORA acepta el inmueble en el estado en que se encuentra, renunciando a cualquier reclamación por vicios ocultos, contaminación del suelo o diferencias de superficie.",
+        "location": "Clause Five — Condiciones",
+        "verified": true
+      },
+      {
+        "quote": "En caso de incumplimiento de la COMPRADORA, pagará una pena equivalente al 20% del precio.",
+        "location": "Clause Six — Pena convencional",
+        "verified": true
+      }
+    ],
+    "found_in_document": true,
+    "confidence": "high"
+  },
+  "qa_usage": {
+    "requests": 1,
+    "input_tokens": 3064,
+    "cached_tokens": 0,
+    "output_tokens": 728,
+    "web_searches": 0,
+    "cost_usd": 0.0006704000000000001
+  },
+  "chat": {
+    "answer": "The developer’s Excel model has been analyzed. Its proposed assumption changes are **pending your approval** in the Assumption Center; they have not yet been applied or recalculated.\n\n**Differences from the current model:**\n- Land price: MXN 265.0M → **MXN 278.0M**\n- Sale price: MXN 108,000 → **MXN 112,000/m²**\n- Efficiency: 82% → **81%**\n- Absorption: 3.0 → **2.6 units/month**\n- Hard cost above grade: MXN 24,000 → **MXN 25,500/m²**\n- Below-grade cost: MXN 14,000 → **MXN 14,800/m²**\n- Predevelopment / construction: 8 / 24 months → **9 / 26 months**\n- Senior LTC: 45% → **50%**\n- Senior spread: 3.5% → **3.75%**\n- Sales commission: 3.0% → **3.5%**\n\nSite area and story counts match. The workbook does not specify a TIIE reference rate, so none was proposed. Its reported 21.4% equity IRR and MXN 251M profit are workbook outputs, not verified results for this project. The file is labeled fictional, so treat its assumptions as unverified.\n\n**Next step:** Open **Assumptions** and review/approve the pending proposals. Then I can summarize the recalculated impact on project metrics.",
+    "tools": [
+      "analyze_document: sample_developer_model_FICTIONAL.xlsx: financial_model, 14 proposals"
+    ],
+    "usage": {
+      "requests": 4,
+      "input_tokens": 15929,
+      "cached_tokens": 6891,
+      "output_tokens": 2497,
+      "web_searches": 0,
+      "cost_usd": 0.0022212100000000004
+    }
+  },
+  "land_price_after (should be unchanged until approved)": 265000000.0
+}

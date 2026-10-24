@@ -80,6 +80,8 @@ def summarize_for_llm(project: dict) -> dict:
         "missing_inputs": res.get("missing", []),
         "pending_research_proposals": pending_props,
         "pending_confirmations": [p["id"] for p in store.list_pending(project["id"])],
+        "documents": [{"document_id": d["id"], "filename": d["filename"], "type": (d["analysis"] or {}).get("doc_type")}
+                      for d in store.list_documents(project["id"])[:10]],
     }
     if res.get("status") == "ok":
         m = res["metrics"]
@@ -158,9 +160,9 @@ def sustainability_eval(project: dict) -> dict:
     return sustainability.evaluate(project["profile"], a, a.get("sustainability_measures") or [])
 
 
-def portfolio() -> dict:
+def portfolio(owner: str | None) -> dict:
     items = []
-    for p in store.list_projects():
+    for p in store.list_projects(owner):
         res = results(p)
         am = None
         if store.list_actuals(p["id"]) and res.get("status") == "ok":

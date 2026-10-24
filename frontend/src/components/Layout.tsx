@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import {
   Banknote, BarChart3, Bot, Building2, ClipboardCheck, Coins, Gauge, History, Landmark, LayoutDashboard, Leaf, ListChecks,
-  MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2,
+  FileText, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
 } from 'lucide-react'
+import { Welcome, useAuth } from '../auth'
 import { api, notifyProjectChanged, type Json } from '../api'
 import { useHealth, useProjectData, type ProjectData } from '../state'
 import ChatPanel from './ChatPanel'
@@ -20,6 +21,7 @@ export const PROJECT_PAGES = [
   { path: 'sustainability', label: 'Sustainability', icon: Leaf, step: 7 },
   { path: 'committee', label: 'Investment Committee', icon: ClipboardCheck, step: 8 },
   { path: 'asset', label: 'Asset Management', icon: Coins, step: 9 },
+  { path: 'documents', label: 'Documents & Files', icon: FileText },
   { path: 'assumptions', label: 'Assumption Center', icon: ListChecks },
   { path: 'history', label: 'Audit Trail', icon: History },
 ]
@@ -78,6 +80,7 @@ export default function Layout() {
           {current && <ProjectBadges p={current} />}
           <div className="grow" />
           {pid && <UndoButton pid={pid} />}
+          <AccountMenu />
           <button className="btn" onClick={() => setChatOpen((o) => !o)}>
             {chatOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />} AI Assistant
           </button>
@@ -127,3 +130,35 @@ export function ProjectLayout() {
 }
 
 export { Banknote }
+
+
+function AccountMenu() {
+  const { user, guest, logout, refresh } = useAuth()
+  const [open, setOpen] = useState(false)
+  const [signup, setSignup] = useState(false)
+  if (guest && !user) {
+    return (
+      <div className="row" style={{ gap: 6, position: 'relative' }}>
+        <span className="badge default"><UserRound size={11} /> Guest</span>
+        <button className="btn sm" onClick={() => setSignup((v) => !v)}>Save my work</button>
+        {signup && (
+          <div style={{ position: 'absolute', right: 0, top: 40, zIndex: 950, boxShadow: 'var(--shadow-lg)', borderRadius: 12 }}>
+            <Welcome inline initialTab="signup" onDone={async () => { setSignup(false); await refresh(); window.location.reload() }} />
+          </div>
+        )}
+      </div>
+    )
+  }
+  return (
+    <div style={{ position: 'relative' }}>
+      <button className="btn" onClick={() => setOpen((o) => !o)} title={user?.email}><UserRound size={15} /> {user?.first_name}</button>
+      {open && (
+        <div className="card" style={{ position: 'absolute', right: 0, top: 40, zIndex: 950, padding: 12, width: 240, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ fontWeight: 600 }}>{user?.name}</div>
+          <div className="small muted" style={{ marginBottom: 10 }}>{user?.email}</div>
+          <button className="btn sm" style={{ width: '100%', justifyContent: 'center' }} onClick={logout}><LogOut size={13} /> Sign out</button>
+        </div>
+      )}
+    </div>
+  )
+}

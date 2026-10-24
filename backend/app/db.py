@@ -110,6 +110,29 @@ CREATE TABLE IF NOT EXISTS token_usage (
   seconds REAL,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,      -- pbkdf2_sha256$salt$digest (never returned)
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS documents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id INTEGER,
+  owner TEXT,
+  filename TEXT NOT NULL,
+  kind TEXT NOT NULL,               -- pdf | excel | word | csv | text | image
+  mime TEXT,
+  size INTEGER NOT NULL,
+  path TEXT NOT NULL,               -- stored file under data/uploads (never served to other owners)
+  text TEXT,                        -- extracted text (untrusted)
+  meta TEXT,                        -- JSON: pages, sheets, truncated...
+  analysis TEXT,                    -- JSON: Document agent output
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_documents_project ON documents(project_id);
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -142,11 +165,19 @@ def connect() -> sqlite3.Connection:
 _conn: sqlite3.Connection | None = None
 
 
+MIGRATIONS = [("projects", "owner", "TEXT"), ("chat_messages", "owner", "TEXT"), ("token_usage", "owner", "TEXT")]
+
+
 def get_conn() -> sqlite3.Connection:
     global _conn
     if _conn is None:
         _conn = connect()
         _conn.executescript(SCHEMA)
+        for table, col, typ in MIGRATIONS:  # add columns to databases created before accounts existed
+            cols = {r[1] for r in _conn.execute(f"PRAGMA table_info({table})")}
+            if col not in cols:
+                _conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+        _conn.execute("CREATE INDEX IF NOT EXISTS ix_projects_owner ON projects(owner)")
         _conn.commit()
     return _conn
 

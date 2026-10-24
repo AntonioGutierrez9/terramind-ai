@@ -7,33 +7,100 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import re
+import secrets
 import time
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.sessions import SessionMiddleware
 
 from engine import analysis, sustainability
 from engine.model import run_model
 from engine.registry import DEFAULT_HARD_COST_SPLIT, PROFILE_CHOICES, REGISTRY, SECTIONS, model_mode
 from engine.validation import ValidationError
 
-from . import seed, services, store
+from . import auth, documents, seed, services, store
+from .agents.runtime import CURRENT_OWNER
 from .config import DEFAULT_LIMITS, FRONTEND_DIST, ai_available, api_key_status
 from .db import get_conn
 
-app = FastAPI(title="TerraMind AI", version="1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="TerraMind AI", version="1.1")
+app.include_router(auth.router)
+
+# ----------------------------------------------------------------------------- data protection
+# Every project-scoped route is checked here: the caller's session owner must own the project.
+# Unknown or foreign ids return 404 so the existence of other people's projects is not revealed.
+OWNED_ROUTES = [(re.compile(r"^/api/projects/(\d+)"), "project"), (re.compile(r"^/api/pending/(\d+)"), "pending"),
+                (re.compile(r"^/api/variants/(\d+)"), "variant"), (re.compile(r"^/api/documents/(\d+)"), "document")]
+PUBLIC_API = ("/api/health", "/api/meta", "/api/auth/", "/api/geocode")
+
+
+def _project_of(kind: str, ident: int) -> int | None:
+    from .db import query_one
+    if kind == "project":
+        return ident
+    table = {"pending": "pending_changes", "variant": "variants", "document": "documents"}[kind]
+    r = query_one(f"SELECT project_id FROM {table} WHERE id=?", (ident,))
+    return r["project_id"] if r else None
+
+
+@app.middleware("http")
+async def ownership(request: Request, call_next):
+    path = request.url.path
+    if not path.startswith("/api/") or path.startswith(PUBLIC_API):
+        return await call_next(request)
+    owner = auth.owner_key(request)
+    if owner is None:
+        return JSONResponse({"detail": "Sign in or continue as a guest first."}, status_code=401)
+    for rx, kind in OWNED_ROUTES:
+        m = rx.match(path)
+        if m:
+            pid = _project_of(kind, int(m.group(1)))
+            exists, proj_owner = store.project_owner(pid) if pid else (False, None)
+            if not exists or proj_owner != owner:
+                return JSONResponse({"detail": "Not found."}, status_code=404)
+            break
+    token = CURRENT_OWNER.set(owner)
+    request.state.owner = owner
+    try:
+        return await call_next(request)
+    finally:
+        CURRENT_OWNER.reset(token)
+
+
+def _session_secret() -> str:
+    """SESSION_SECRET from .env if set; otherwise a random secret generated once and kept in the local database."""
+    env = os.getenv("SESSION_SECRET", "").strip()
+    if env:
+        return env
+    get_conn()
+    secret = store.get_setting("session_secret")
+    if not secret:
+        secret = secrets.token_urlsafe(48)
+        store.set_setting("session_secret", secret)
+    return secret
+
+
+app.add_middleware(SessionMiddleware, secret_key=_session_secret(), session_cookie="tm_session",
+                   max_age=14 * 24 * 3600, same_site="lax", https_only=False)
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"],
+                   allow_headers=["*"], allow_credentials=True)
+
+
+def owner_of(request: Request) -> str:
+    return request.state.owner
 
 
 @app.on_event("startup")
 def startup() -> None:
     get_conn()
-    seed.seed_if_empty()
 
 
 @app.exception_handler(ValidationError)
@@ -46,8 +113,9 @@ async def _store(_, exc):
     return JSONResponse({"detail": str(exc)}, status_code=404 if "not found" in str(exc) else 422)
 
 
-def limits() -> dict:
-    return {**DEFAULT_LIMITS, **(store.get_setting("limits") or {})}
+def limits(owner: str | None = None) -> dict:
+    owner = owner or CURRENT_OWNER.get()
+    return {**DEFAULT_LIMITS, **(store.get_setting(f"limits:{owner}") or {})}
 
 
 # ----------------------------------------------------------------------------- meta
@@ -69,9 +137,9 @@ class ProjectIn(BaseModel):
 
 
 @app.get("/api/projects")
-def projects():
+def projects(request: Request):
     out = []
-    for p in store.list_projects():
+    for p in store.list_projects(owner_of(request)):
         res = services.results(p)
         out.append({"id": p["id"], "name": p["name"], "profile": p["profile"], "status": p["status"], "in_portfolio": p["in_portfolio"],
                     "updated_at": p["updated_at"], "model_status": res.get("status"), "metrics": services.key_metrics(res),
@@ -80,9 +148,9 @@ def projects():
 
 
 @app.post("/api/projects")
-def create(body: ProjectIn):
+def create(body: ProjectIn, request: Request):
     a = dict(body.assumptions)
-    pid = store.create_project(body.profile, {}, actor="user")
+    pid = store.create_project(body.profile, {}, actor="user", owner=owner_of(request))
     if a:
         r = store.apply_changes(pid, [{"key": k, "value": v} for k, v in a.items()], actor="user", reason="project wizard")
         if r["rejected"]:
@@ -359,13 +427,14 @@ async def asset_commentary(pid: int):
 
 
 @app.get("/api/portfolio")
-def portfolio():
-    return services.portfolio()
+def portfolio(request: Request):
+    return services.portfolio(owner_of(request))
 
 
 @app.get("/api/usage")
-def usage(project_id: int | None = None):
-    return store.usage_report(project_id)
+def usage(request: Request):
+    """Anonymous aggregate across all users (for tokenomics) plus the caller's own usage."""
+    return {**store.usage_report(), "mine": store.usage_report(owner=owner_of(request))}
 
 
 @app.get("/api/settings/limits")
@@ -383,14 +452,18 @@ def put_limits(body: dict):
         if v <= 0:
             raise HTTPException(422, f"{k} must be positive")
         clean[k] = v
-    store.set_setting("limits", {**(store.get_setting("limits") or {}), **clean})
+    key = f"limits:{CURRENT_OWNER.get()}"
+    store.set_setting(key, {**(store.get_setting(key) or {}), **clean})
     return limits()
 
 
 # ----------------------------------------------------------------------------- chat (SSE)
 @app.get("/api/chat/messages")
-def chat_messages(project_id: int | None = None):
-    return store.list_messages(project_id)
+def chat_messages(request: Request, project_id: int | None = None):
+    owner = owner_of(request)
+    if project_id is not None and store.project_owner(project_id) != (True, owner):
+        raise HTTPException(404, "Not found.")
+    return store.list_messages(project_id, owner=owner)
 
 
 class ChatIn(BaseModel):
@@ -400,8 +473,11 @@ class ChatIn(BaseModel):
 
 
 @app.post("/api/chat")
-async def chat(body: ChatIn):
+async def chat(body: ChatIn, request: Request):
     _need_ai()
+    owner = owner_of(request)
+    if body.project_id is not None and store.project_owner(body.project_id) != (True, owner):
+        raise HTTPException(404, "Not found.")
     from .agents.manager import run_chat
     from .agents.runtime import TurnContext
     msg = body.message.strip()
@@ -412,7 +488,7 @@ async def chat(body: ChatIn):
     mult = max(1.0, min(body.limit_multiplier, 4.0))  # user-approved raise, capped at 4×
     lim = {k: (v * mult if k == "max_usd" else int(v * mult)) for k, v in limits().items()}
     queue: asyncio.Queue = asyncio.Queue()
-    ctx = TurnContext(project_id=body.project_id, purpose="chat", limits=lim, queue=queue)
+    ctx = TurnContext(project_id=body.project_id, purpose="chat", limits=lim, queue=queue, owner=owner)
 
     async def work():
         try:
@@ -436,6 +512,90 @@ async def chat(body: ChatIn):
                 task.cancel()
 
     return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+
+# ----------------------------------------------------------------------------- documents
+@app.get("/api/projects/{pid}/documents")
+def list_docs(pid: int):
+    return [{k: v for k, v in d.items() if k != "path"} for d in store.list_documents(pid)]
+
+
+@app.post("/api/projects/{pid}/documents")
+async def upload_doc(pid: int, request: Request, file: UploadFile = File(...), analyze: bool = Form(True)):
+    try:
+        kind = documents.kind_for(file.filename or "file")
+        data = await file.read()
+        path = documents.save_file(owner_of(request), file.filename or "file", data)
+        text, meta = documents.extract(kind, data, file.filename or "file")
+    except documents.UploadError as exc:
+        raise HTTPException(422, str(exc))
+    except Exception as exc:  # noqa: BLE001  (corrupt / password-protected files)
+        raise HTTPException(422, f"Could not read this file ({type(exc).__name__}). Is it corrupt or password-protected?")
+    doc_id = store.add_document(pid, owner_of(request), file.filename or "file", kind, file.content_type, len(data), str(path), text, meta)
+    out = {"document": {k: v for k, v in store.get_document(doc_id).items() if k != "path"}}
+    if analyze and ai_available():
+        out.update(await _analyze_doc(doc_id))
+    return out
+
+
+async def _analyze_doc(doc_id: int) -> dict:
+    from .agents.document_agent import analyze
+    from .agents.runtime import LimitReached, TurnContext
+    d = store.get_document(doc_id)
+    ctx = TurnContext(project_id=d["project_id"], purpose="document", limits=limits())
+    try:
+        res = await analyze(ctx, doc_id)
+    except LimitReached as exc:
+        return {"status": "limit_reached", "detail": exc.detail}
+    return {"analysis": res, "turn_usage": ctx.summary()}
+
+
+@app.get("/api/documents/{doc_id}")
+def get_doc(doc_id: int):
+    d = store.get_document(doc_id, with_text=True)
+    d.pop("path", None)
+    d["text_preview"] = d.pop("text")[:5000]
+    return d
+
+
+@app.get("/api/documents/{doc_id}/file")
+def doc_file(doc_id: int):
+    d = store.get_document(doc_id)
+    return FileResponse(d["path"], filename=d["filename"], media_type=d["mime"] or "application/octet-stream")
+
+
+@app.post("/api/documents/{doc_id}/analyze")
+async def analyze_doc(doc_id: int):
+    _need_ai()
+    return await _analyze_doc(doc_id)
+
+
+@app.post("/api/documents/{doc_id}/ask")
+async def ask_doc(doc_id: int, body: dict):
+    _need_ai()
+    from .agents.document_agent import ask
+    from .agents.runtime import LimitReached, TurnContext
+    q = str(body.get("question", "")).strip()
+    if not q:
+        raise HTTPException(422, "Ask a question.")
+    d = store.get_document(doc_id)
+    ctx = TurnContext(project_id=d["project_id"], purpose="document", limits=limits())
+    try:
+        res = await ask(ctx, doc_id, q)
+    except LimitReached as exc:
+        return {"status": "limit_reached", "detail": exc.detail}
+    return {**res, "turn_usage": ctx.summary()}
+
+
+@app.delete("/api/documents/{doc_id}")
+def delete_doc(doc_id: int):
+    from pathlib import Path
+    path = store.delete_document(doc_id)
+    try:
+        Path(path).unlink(missing_ok=True)
+    except OSError:
+        pass
+    return {"ok": True}
 
 
 # ----------------------------------------------------------------------------- geocoding (map)

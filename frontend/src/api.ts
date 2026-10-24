@@ -11,6 +11,7 @@ async function req<T = Json>(method: string, url: string, body?: unknown): Promi
   })
   const text = await r.text()
   const data = text ? JSON.parse(text) : null
+  if (r.status === 401 && !url.startsWith('/api/auth/')) window.dispatchEvent(new Event('tm:auth-required'))
   if (!r.ok) throw new Error((data && (data.detail || data.message)) || `${r.status} ${r.statusText}`)
   return data as T
 }
@@ -40,6 +41,19 @@ export function onProjectChanged(fn: (pid: number | null) => void) {
   const h = (e: Event) => fn((e as CustomEvent).detail?.pid ?? null)
   window.addEventListener('tm:project-changed', h)
   return () => window.removeEventListener('tm:project-changed', h)
+}
+
+/** Upload a file to a project (multipart); the backend extracts text and runs the Document agent. */
+export async function uploadDocument(pid: number, file: File, analyze = true) {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('analyze', analyze ? 'true' : 'false')
+  const r = await fetch(`/api/projects/${pid}/documents`, { method: 'POST', body: fd })
+  const text = await r.text()
+  const data = text ? JSON.parse(text) : null
+  if (!r.ok) throw new Error((data && data.detail) || `${r.status} ${r.statusText}`)
+  notifyProjectChanged(pid)
+  return data
 }
 
 /** Stream a chat turn (Server-Sent Events over POST). */

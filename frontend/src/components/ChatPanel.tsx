@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bot, Check, Loader2, Mic, MicOff, Send, ShieldCheck, Wrench, X } from 'lucide-react'
-import { api, notifyProjectChanged, streamChat, type Json } from '../api'
+import { Bot, Check, Loader2, Mic, MicOff, Paperclip, Send, ShieldCheck, Wrench, X } from 'lucide-react'
+import { api, notifyProjectChanged, streamChat, uploadDocument, type Json } from '../api'
 import { useHealth } from '../state'
 
 interface Msg { role: 'user' | 'assistant'; content: string; extra?: Json }
@@ -55,6 +55,8 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   const [micError, setMicError] = useState<string | null>(null)
   const [lang, setLang] = useState<'en-US' | 'es-MX'>('en-US')
   const recRef = useRef<Json>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState<string | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const health = useHealth()
   const aiOff = health && health.ai_available === false
@@ -116,6 +118,24 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
     try { rec.start(); setListening(true) } catch (err) { setMicError(String(err)) }
   }
 
+  const attach = async (files: FileList | null) => {
+    const f = files?.[0]
+    if (!f) return
+    setMicError(null)
+    if (!projectId) { setMicError('Open a project first, then attach files to it (permits, contracts, Excel models…).'); return }
+    setUploading(f.name)
+    try {
+      const r = await uploadDocument(projectId, f, true)
+      setUploading(null)
+      const note = input.trim() ? ` ${input.trim()}` : ' What does it say, and what should we update or watch out for?'
+      setInput('')
+      await send(`I uploaded "${r.document.filename}" (document #${r.document.id}).${note}`)
+    } catch (e) {
+      setUploading(null)
+      setMicError(`Upload failed: ${(e as Error).message}`)
+    }
+  }
+
   const last = msgs[msgs.length - 1]
   return (
     <aside className="chat">
@@ -160,10 +180,14 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
         )}
         {aiOff && <div className="callout warn small" style={{ marginBottom: 8 }}>AI is off: add PORTKEY_API_KEY to a .env file (repo folder or the folder above).</div>}
         {micError && <div className="callout warn small" style={{ marginBottom: 8 }}><MicOff size={14} /> {micError}</div>}
+        {uploading && <div className="callout info small" style={{ marginBottom: 8 }}><span className="spinner" /> Reading and analyzing <b>{uploading}</b>…</div>}
         {listening && <div className="callout info small" style={{ marginBottom: 8 }}><Mic size={14} /> Listening ({lang === 'es-MX' ? 'Español' : 'English'})… speak, then review the text and press Send.</div>}
         <div className="chat-input">
           <textarea rows={1} value={input} placeholder={listening ? 'Listening…' : 'Ask or instruct… (Enter to send)'} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
+          <button className="icon-btn" onClick={() => fileRef.current?.click()} disabled={busy || !!uploading}
+            title={projectId ? 'Attach a file (permit, certificate, contract, Excel model, photo)' : 'Open a project to attach files'}><Paperclip size={16} /></button>
+          <input ref={fileRef} type="file" hidden accept=".pdf,.xlsx,.xlsm,.docx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(e) => { attach(e.target.files); e.target.value = '' }} />
           <button className={`icon-btn ${listening ? 'rec' : ''}`} onClick={toggleMic} title={listening ? 'Stop dictation' : 'Dictate (speech-to-text)'} aria-pressed={listening}>
             {listening ? <MicOff size={16} /> : <Mic size={16} />}
           </button>

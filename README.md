@@ -29,7 +29,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-Then open **http://localhost:8000** (`run.py` opens it for you). On first start, the database is created with three fictional demo projects.
+Then open **http://localhost:8000** (`run.py` opens it for you). Choose **Continue as guest** (fastest) or **Create account**. Each guest or account gets a private copy of three fictional demo projects.
 
 ### API key (.env)
 
@@ -47,7 +47,7 @@ See `.env.example`. **Without a key, the whole financial platform still works.**
 
 ```bash
 python run.py --port 8001 --no-browser       # another port, no browser
-cd backend && python -m pytest -q            # 45 tests: engine math + safety controls
+cd backend && python -m pytest -q            # 52 tests: engine math, safety controls, accounts and data isolation
 cd frontend && npm install && npm run dev    # frontend dev server on :5173 (proxies /api to :8000)
 cd frontend && npm run build                 # rebuild frontend/dist
 ```
@@ -55,6 +55,14 @@ cd frontend && npm run build                 # rebuild frontend/dist
 To start from a clean database, delete `backend/data/terramind.db`. It is re-seeded on the next start.
 
 ---
+
+## Accounts and guests
+
+* **Create account / Sign in:** projects, chats and files are private to your account and available whenever you sign in again.
+  Passwords are hashed with PBKDF2-SHA256 (standard library), and login is a signed HttpOnly session cookie (same approach as Homework 4).
+* **Continue as guest:** a private workspace tied to this browser. Click **Save my work** anytime to create an account; your guest projects move into it.
+* Every project, document and pending change is checked against the caller's session on every request. Other users' ids return 404.
+* Optional `SESSION_SECRET` in `.env`; if absent, a random secret is generated once and stored in the local database.
 
 ## What you can do (a 5-minute tour)
 
@@ -67,7 +75,8 @@ To start from a clean database, delete `backend/data/terramind.db`. It is re-see
 7. **Investment Committee**: two challenger agents and a chair produce a memo. Every figure comes from the engine, and invented numbers are flagged.
 8. **Asset Management**: actuals vs. underwriting, automatic reforecast, alerts.
 9. **AI Assistant** (right panel): type or 🎤 dictate (English or Spanish), e.g. *"Increase construction costs by 10%"*, *"Change the financing structure to 40% equity and 60% debt"* (material, so you confirm with a button), *"What's the maximum we should pay for the land for an 18% equity IRR?"*
-10. **Assumption Center**: every variable with its value, unit, source, date, verification and last change. You approve or reject AI proposals here. **Audit Trail** shows every change, with undo.
+10. **Documents & Files**: upload permits, zoning certificates, contracts, appraisals, budgets or an Excel model (PDF incl. scans, XLSX, DOCX, CSV, TXT, photos). The Document agent extracts the facts, proposes values for your model (each checked verbatim against the file and pending until you approve it), reviews contracts (risks, deadlines, missing protections, questions for counsel), and answers questions with quotes. You can also attach files in the chat (📎). Fictional samples are in `docs/samples/`.
+11. **Assumption Center**: every variable with its value, unit, source, date, verification and last change. You approve or reject AI proposals here. **Audit Trail** shows every change, with undo.
 
 Voice input uses the browser's Web Speech API (Chrome or Edge). Audio is never stored. Other browsers show a fallback message.
 
@@ -112,12 +121,14 @@ terramind-ai/
 * Comparable prices per m² are computed by code. Web pages are never labeled as lender offers.
 * IC guardrails: deterministic downgrade rules and a check that the memo's numbers match the engine.
 * Limits on specialist calls, tool calls, requests, tokens and USD per turn. A run stops safely and asks permission to continue.
+* Uploaded files are untrusted: text that tries to instruct AI is flagged, values need a verbatim quote that code finds in the file, and nothing changes until you approve it.
+* Accounts and guests are isolated per session; data is never shared between owners.
 * Full audit trail and undo.
 
 ## Open-source review and licenses
 
 No code was copied from the suggested reference repos. They were reviewed for concepts only (see `docs/ARCHITECTURE.md` §8): pyforma (BSD-3, stale), rangekeeper (MPL-2.0, heavy dependencies), real-estate-datamap (MIT), Real-Estate-Valuation calculator (Apache-2.0), mern-yariga-dashboard (MIT).
-Libraries used: FastAPI (MIT), PydanticAI (MIT), OpenAI Python SDK (Apache-2.0), Uvicorn (BSD-3), httpx (BSD-3), python-dotenv (BSD-3), React (MIT), Vite (MIT), Recharts (MIT), Leaflet (BSD-2), lucide-react (ISC), React Router (MIT). Map tiles © OpenStreetMap contributors. Geocoding by Nominatim (cached, low volume).
+Libraries used: pypdf (BSD-3), python-docx (MIT), openpyxl (MIT), itsdangerous (BSD-3), email-validator (Unlicense), python-multipart (Apache-2.0), FastAPI (MIT), PydanticAI (MIT), OpenAI Python SDK (Apache-2.0), Uvicorn (BSD-3), httpx (BSD-3), python-dotenv (BSD-3), React (MIT), Vite (MIT), Recharts (MIT), Leaflet (BSD-2), lucide-react (ISC), React Router (MIT). Map tiles © OpenStreetMap contributors. Geocoding by Nominatim (cached, low volume).
 
 ## Known limitations
 

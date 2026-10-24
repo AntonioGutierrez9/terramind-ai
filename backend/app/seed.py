@@ -35,14 +35,12 @@ def _demo_actuals(profile: dict, a: dict) -> list[dict]:
     return rows
 
 
-def seed_if_empty() -> list[int]:
-    if store.list_projects():
-        return []
+def _seed(owner: str | None) -> list[int]:
     snapshots = json.loads(SNAPSHOTS.read_text(encoding="utf-8")) if SNAPSHOTS.exists() else {}
     ids = []
     for case in CASES:
         pid = store.create_project(case["profile"], case["assumptions"], source="demo", actor="system",
-                                   status="portfolio" if case.get("actuals") else "draft")
+                                   status="portfolio" if case.get("actuals") else "draft", owner=owner)
         if case.get("actuals"):
             store.set_status(pid, "portfolio", in_portfolio=True, actor="system")
             for row in _demo_actuals(case["profile"], case["assumptions"]):
@@ -53,3 +51,22 @@ def seed_if_empty() -> list[int]:
             store.propose_values(pid, kind, _proposals(kind, snap["payload"]))
         ids.append(pid)
     return ids
+
+
+def seed_for_owner(owner: str | None) -> list[int]:
+    """Give each new account or guest its own private copy of the three fictional demo projects (once)."""
+    if not owner or store.get_setting(f"seeded:{owner}"):
+        return []
+    if store.list_projects(owner):
+        store.set_setting(f"seeded:{owner}", True)
+        return []
+    ids = _seed(owner)
+    store.set_setting(f"seeded:{owner}", True)
+    return ids
+
+
+def seed_if_empty() -> list[int]:
+    """Tests / scripts: seed owner-less demo projects into an empty database."""
+    if store.list_projects():
+        return []
+    return _seed(None)

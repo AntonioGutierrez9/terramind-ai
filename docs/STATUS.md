@@ -18,6 +18,8 @@
 | Speech-to-text | Mic button (Web Speech API, en-US / es-MX), status, permission errors, fallback message, transcript editable before send, no audio stored | **manual test in Chrome still to be done by the user** |
 | Assumption Control Center & audit | All variables with value/unit/source/date/verification/last change, approve/reject proposals, suggested defaults (labeled unverified), history with undo, pending confirmations | `test_undo_restores_previous_values_and_provenance` |
 | Token efficiency | Limits (specialists, tool calls, requests, tokens, USD), safe stop + continue with permission, research cache, ledger, Usage page with projections | `test_specialist_call_limit_stops_the_turn`, live limit demo |
+| Accounts & guests | Sign up / sign in (PBKDF2-SHA256, signed HttpOnly cookie, same as HW4), private guest workspaces, guest → account migration, per-owner isolation of projects, chats, files and limits | `tests/test_accounts.py` (7 tests) |
+| Documents | Upload PDF (incl. scans), XLSX, DOCX, CSV, TXT, images; deterministic extraction; Document agent (facts, permit, contract review, Excel model comparison, value proposals with verified quotes); Q&A with quote checks; chat 📎 attachment; injection warning | `docs/evidence/document_tests.json`, `test_quote_verification_blocks_invented_values` |
 | Deliverables | README, `.env.example`, public repo, report.html (14 printed pages), slides.html (9 slides, reveal.js), fresh-clone dry run (47 s, 43 tests pass) | repo |
 
 ## Partially implemented (simpler working version, documented)

@@ -40,6 +40,9 @@ There are no cycles. Specialists have no delegation tool, so delegation depth is
 | `compare_sustainability(measure_keys?)` | With vs. without measures, beneficiary-aware | no |
 | `request_research(kind, request?)` | Delegate to one specialist. Results become pending proposals | proposals only |
 | `run_investment_committee()` | IC process (three LLM calls) | memo |
+| `list_documents()` | Files uploaded to the project with their analysis summary | no |
+| `analyze_document(document_id)` | Runs the Document agent (or reuses the stored analysis) | proposals only |
+| `ask_document(document_id, question)` | Answer from the file with verbatim quotes (contract questions, permit dates, model inputs) | no |
 
 There is **no tool that confirms pending changes or approves proposals.** Those endpoints are reachable only from UI buttons.
 
@@ -54,6 +57,16 @@ There is **no tool that confirms pending changes or approves proposals.** Those 
 | Sustainability | `SusBenchmark` | Informational table with sources |
 
 All specialist text is **scrubbed** for instruction-like phrases (`runtime.scrub_obj`), and suspicious fields are flagged in the UI. Results are **cached** by a hash of agent + normalized request (14 days), and an identical request in the same turn is blocked.
+
+## 2b. Document agent (`backend/app/agents/document_agent.py`, prompt `document.md`)
+
+Reads uploaded files: zoning certificates, permits, contracts, appraisals, budgets and Excel models. Text is extracted deterministically with pypdf, openpyxl and python-docx; scans and photos are read by the vision-capable model. Output `DocumentAnalysis`: type, summary, key facts with locations, value proposals (registry keys) each with a **verbatim quote**, zoning code, permit details, contract review (parties, key terms, deadlines, payment terms, risks with severity and suggestion, missing protections, questions for counsel) and Excel model notes. Guardrails:
+
+* no tools; file text is wrapped as untrusted data and scrubbed; instruction-like text in the file is flagged to the user
+* every proposed value is validated by the registry, and code checks that the quote **and its number** appear in the extracted text, otherwise the value is discarded
+* a zoning code found in the document is expanded deterministically (`engine/zoning.py`)
+* accepted values become pending proposals (approve or reject on the Documents page or in the Assumption Center)
+* `ask_document` picks relevant chunks of long files by keyword overlap and marks each quote verified or not
 
 ## 3. Financial Modeling (deterministic, no LLM)
 

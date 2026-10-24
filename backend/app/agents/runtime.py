@@ -8,6 +8,7 @@ can use measured numbers. Limits stop the turn safely and ask the user before sp
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import re
 import time
 import uuid
@@ -20,6 +21,9 @@ from .. import store
 from ..config import DEFAULT_LIMITS, MODEL_NAME, cost_usd
 
 
+CURRENT_OWNER: contextvars.ContextVar[str | None] = contextvars.ContextVar("terramind_owner", default=None)
+
+
 class LimitReached(Exception):
     def __init__(self, kind: str, detail: str):
         super().__init__(detail)
@@ -30,6 +34,7 @@ class LimitReached(Exception):
 @dataclass
 class TurnContext:
     project_id: int | None
+    owner: str | None = field(default_factory=lambda: CURRENT_OWNER.get())
     purpose: str = "chat"
     limits: dict = field(default_factory=lambda: dict(DEFAULT_LIMITS))
     queue: asyncio.Queue | None = None
@@ -64,7 +69,7 @@ class TurnContext:
         self.tokens += u["input_tokens"] + u["output_tokens"]
         row = {"agent": agent, **u, "cost_usd": cost, "seconds": round(seconds, 2)}
         self.ledger.append(row)
-        store.record_usage(self.run_id, self.project_id, agent, purpose or self.purpose, MODEL_NAME, u, cost, seconds)
+        store.record_usage(self.run_id, self.project_id, agent, purpose or self.purpose, MODEL_NAME, u, cost, seconds, owner=self.owner)
         self.emit("usage", **row, turn_cost_usd=self.spent_usd, turn_tokens=self.tokens)
         return row
 

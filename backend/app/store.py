@@ -35,11 +35,11 @@ class StoreError(ValueError):
 def _row_to_project(r) -> dict:
     return {"id": r["id"], "name": r["name"], "profile": loads(r["profile"]), "assumptions": loads(r["assumptions"]),
             "meta": loads(r["meta"]), "status": r["status"], "in_portfolio": bool(r["in_portfolio"]),
-            "created_at": r["created_at"], "updated_at": r["updated_at"]}
+            "created_at": r["created_at"], "updated_at": r["updated_at"], "owner": r["owner"] if "owner" in r.keys() else None}
 
 
 def create_project(profile: dict, assumptions: dict | None = None, source: str = "user", actor: str = "user",
-                   status: str = "draft") -> int:
+                   status: str = "draft", owner: str | None = None) -> int:
     profile = {**profile}
     name = (profile.get("name") or "Untitled project").strip()[:120]
     profile["name"] = name
@@ -56,8 +56,8 @@ def create_project(profile: dict, assumptions: dict | None = None, source: str =
                          "confidence": "illustrative" if source == "demo" else None}
     ts = now()
     with tx() as c:
-        cur = c.execute("INSERT INTO projects(name, profile, assumptions, meta, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?)",
-                        (name, dumps(profile), dumps(clean), dumps(meta), status, ts, ts))
+        cur = c.execute("INSERT INTO projects(name, profile, assumptions, meta, status, created_at, updated_at, owner) VALUES (?,?,?,?,?,?,?,?)",
+                        (name, dumps(profile), dumps(clean), dumps(meta), status, ts, ts, owner))
         return cur.lastrowid
 
 
@@ -68,8 +68,21 @@ def get_project(pid: int) -> dict:
     return _row_to_project(r)
 
 
-def list_projects() -> list[dict]:
-    return [_row_to_project(r) for r in query("SELECT * FROM projects WHERE status != 'archived' ORDER BY id")]
+ALL = "*"
+
+
+def list_projects(owner: str | None = ALL) -> list[dict]:
+    """owner=ALL for internal use only; the API always passes the caller's owner key."""
+    if owner == ALL:
+        rows = query("SELECT * FROM projects WHERE status != 'archived' ORDER BY id")
+    else:
+        rows = query("SELECT * FROM projects WHERE status != 'archived' AND owner IS ? ORDER BY id", (owner,))
+    return [_row_to_project(r) for r in rows]
+
+
+def project_owner(pid: int) -> tuple[bool, str | None]:
+    r = query_one("SELECT owner FROM projects WHERE id=?", (pid,))
+    return (r is not None, r["owner"] if r else None)
 
 
 def update_profile(pid: int, fields: dict, actor: str = "user") -> dict:
@@ -104,7 +117,7 @@ def set_status(pid: int, status: str, in_portfolio: bool | None = None, actor: s
 def duplicate_project(pid: int, name: str | None = None) -> int:
     p = get_project(pid)
     prof = {**p["profile"], "name": name or f"{p['name']} (copy)"}
-    new_id = create_project(prof, {}, actor="user")
+    new_id = create_project(prof, {}, actor="user", owner=p.get("owner"))
     with tx() as c:
         c.execute("UPDATE projects SET assumptions=?, meta=? WHERE id=?", (dumps(p["assumptions"]), dumps(p["meta"]), new_id))
     return new_id
@@ -451,31 +464,37 @@ def latest_memo(pid: int) -> dict | None:
             "created_at": r["created_at"]}
 
 
-def add_message(pid: int | None, role: str, content: str, extra: dict | None = None) -> int:
+def add_message(pid: int | None, role: str, content: str, extra: dict | None = None, owner: str | None = None) -> int:
     with tx() as c:
-        cur = c.execute("INSERT INTO chat_messages(project_id,role,content,extra,created_at) VALUES (?,?,?,?,?)",
-                        (pid, role, content, dumps(extra or {}), now()))
+        cur = c.execute("INSERT INTO chat_messages(project_id,role,content,extra,created_at,owner) VALUES (?,?,?,?,?,?)",
+                        (pid, role, content, dumps(extra or {}), now(), owner))
         return cur.lastrowid
 
 
-def list_messages(pid: int | None, limit: int = 60) -> list[dict]:
-    rows = query("SELECT * FROM chat_messages WHERE project_id IS ? ORDER BY id DESC LIMIT ?", (pid, limit))
+def list_messages(pid: int | None, limit: int = 60, owner: str | None = ALL) -> list[dict]:
+    if owner == ALL:
+        rows = query("SELECT * FROM chat_messages WHERE project_id IS ? ORDER BY id DESC LIMIT ?", (pid, limit))
+    else:
+        rows = query("SELECT * FROM chat_messages WHERE project_id IS ? AND owner IS ? ORDER BY id DESC LIMIT ?", (pid, owner, limit))
     return [{"id": r["id"], "role": r["role"], "content": r["content"], "extra": loads(r["extra"]), "at": r["created_at"]}
             for r in reversed(rows)]
 
 
 def record_usage(run_id: str, pid: int | None, agent: str, purpose: str, model: str, usage: dict, cost: float,
-                 seconds: float | None = None) -> None:
+                 seconds: float | None = None, owner: str | None = None) -> None:
     with tx() as c:
         c.execute("INSERT INTO token_usage(run_id,project_id,agent,purpose,model,requests,input_tokens,cached_tokens,output_tokens,"
-                  "web_searches,cost_usd,seconds,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                  "web_searches,cost_usd,seconds,created_at,owner) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                   (run_id, pid, agent, purpose, model, usage.get("requests", 0), usage.get("input_tokens", 0),
-                   usage.get("cached_tokens", 0), usage.get("output_tokens", 0), usage.get("web_searches", 0), cost, seconds, now()))
+                   usage.get("cached_tokens", 0), usage.get("output_tokens", 0), usage.get("web_searches", 0), cost, seconds, now(), owner))
 
 
-def usage_report(pid: int | None = None) -> dict:
-    where = "WHERE project_id=?" if pid else ""
-    params = (pid,) if pid else ()
+def usage_report(pid: int | None = None, owner: str | None = ALL) -> dict:
+    if owner != ALL:
+        where, params = "WHERE owner IS ?", (owner,)
+    else:
+        where = "WHERE project_id=?" if pid else ""
+        params = (pid,) if pid else ()
     by_agent = query(f"SELECT agent, COUNT(*) calls, SUM(requests) requests, SUM(input_tokens) input_tokens, SUM(cached_tokens) cached_tokens, "
                      f"SUM(output_tokens) output_tokens, SUM(web_searches) web_searches, SUM(cost_usd) cost_usd, AVG(seconds) avg_seconds "
                      f"FROM token_usage {where} GROUP BY agent ORDER BY cost_usd DESC", params)
@@ -522,3 +541,44 @@ def apply_zoning_code(pid: int, code: str, actor: str = "user") -> dict:
         with tx() as c:
             c.execute("UPDATE projects SET meta=? WHERE id=?", (dumps(meta), pid))
     return {"parsed": parsed, **res}
+
+
+# ----------------------------------------------------------------------------- documents
+def add_document(pid: int | None, owner: str | None, filename: str, kind: str, mime: str | None, size: int, path: str,
+                 text: str, meta: dict) -> int:
+    with tx() as c:
+        cur = c.execute("INSERT INTO documents(project_id,owner,filename,kind,mime,size,path,text,meta,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (pid, owner, filename[:200], kind, mime, size, path, text, dumps(meta), now()))
+        return cur.lastrowid
+
+
+def _doc_row(r, with_text: bool = False) -> dict:
+    d = {"id": r["id"], "project_id": r["project_id"], "owner": r["owner"], "filename": r["filename"], "kind": r["kind"],
+         "mime": r["mime"], "size": r["size"], "meta": loads(r["meta"]) or {}, "analysis": loads(r["analysis"]),
+         "created_at": r["created_at"], "path": r["path"]}
+    if with_text:
+        d["text"] = r["text"] or ""
+    return d
+
+
+def get_document(doc_id: int, with_text: bool = False) -> dict:
+    r = query_one("SELECT * FROM documents WHERE id=?", (doc_id,))
+    if not r:
+        raise StoreError(f"document {doc_id} not found")
+    return _doc_row(r, with_text)
+
+
+def list_documents(pid: int) -> list[dict]:
+    return [_doc_row(r) for r in query("SELECT * FROM documents WHERE project_id=? ORDER BY id DESC", (pid,))]
+
+
+def save_document_analysis(doc_id: int, analysis: dict) -> None:
+    with tx() as c:
+        c.execute("UPDATE documents SET analysis=? WHERE id=?", (dumps(analysis), doc_id))
+
+
+def delete_document(doc_id: int) -> str:
+    d = get_document(doc_id)
+    with tx() as c:
+        c.execute("DELETE FROM documents WHERE id=?", (doc_id,))
+    return d["path"]

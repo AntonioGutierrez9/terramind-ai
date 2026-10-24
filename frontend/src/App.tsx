@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout, { ProjectLayout } from './components/Layout'
 import { AppProviders } from './state'
+import { AuthGate } from './auth'
+import Documents from './pages/project/Documents'
 import Portfolio from './pages/Portfolio'
 import NewProject from './pages/NewProject'
 import Usage from './pages/Usage'
@@ -19,6 +21,7 @@ import History from './pages/project/History'
 export default function App() {
   return (
     <AppProviders>
+      <AuthGate>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -36,6 +39,7 @@ export default function App() {
               <Route path="sustainability" element={<Sustainability />} />
               <Route path="committee" element={<Committee />} />
               <Route path="asset" element={<Asset />} />
+              <Route path="documents" element={<Documents />} />
               <Route path="assumptions" element={<Assumptions />} />
               <Route path="history" element={<History />} />
             </Route>
@@ -43,6 +47,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </AuthGate>
     </AppProviders>
   )
 }

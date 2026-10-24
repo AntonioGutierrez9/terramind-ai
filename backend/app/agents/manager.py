@@ -285,7 +285,7 @@ def create_project(ctx: RunContext[ManagerDeps], name: str, city: str, neighborh
     pid = store.create_project({"name": name, "city": city, "neighborhood": neighborhood, "country": country,
                                 "state": "Ciudad de México" if "mexico city" in city.lower() or "cdmx" in city.lower() else "",
                                 "property_type": property_type, "strategy": strategy, "business_model": business_model,
-                                "currency": currency, "area_unit": "m²", "horizon_years": 5}, actor="chatbot")
+                                "currency": currency, "area_unit": "m²", "horizon_years": 5}, actor="chatbot", owner=ctx.deps.ctx.owner)
     ctx.deps.project_id = pid
     ctx.deps.ctx.project_id = pid
     _log(ctx, "create_project", f"created project #{pid} {name}", f"project:{pid}")
@@ -363,6 +363,56 @@ async def request_research(ctx: RunContext[ManagerDeps], kind: Literal["regulato
 
 
 @agent.tool
+def list_documents(ctx: RunContext[ManagerDeps]) -> list[dict]:
+    """Files the user uploaded to this project (permits, certificates, contracts, Excel models...) with their analysis summary."""
+    from .document_agent import compact
+    p = _project(ctx)
+    docs = store.list_documents(p["id"])
+    _log(ctx, "list_documents", f"{len(docs)} document(s)", "documents")
+    return [{"document_id": d["id"], "filename": d["filename"], "kind": d["kind"], "uploaded": d["created_at"],
+             "analysis": compact(d["analysis"])} for d in docs[:20]]
+
+
+@agent.tool
+async def analyze_document(ctx: RunContext[ManagerDeps], document_id: int, force: bool = False) -> dict:
+    """Run the Document agent on an uploaded file: summary, key facts, permit details, contract risks, and values it
+    proposes for the model (pending until the user approves them in the app)."""
+    from .document_agent import analyze, compact
+    p = _project(ctx)
+    d = store.get_document(document_id)
+    if d["project_id"] != p["id"]:
+        return {"error": "That document belongs to another project."}
+    if d["analysis"] and not force:  # already analyzed at upload: reuse (no tokens)
+        _log(ctx, "analyze_document", f"{d['filename']}: cached analysis", "documents")
+        return compact(d["analysis"])
+    try:
+        res = await analyze(ctx.deps.ctx, document_id)
+    except LimitReached as exc:
+        ctx.deps.ctx.limit_hit = {"kind": exc.kind, "detail": exc.detail}
+        return {"status": "limit_reached", "message": exc.detail}
+    _log(ctx, "analyze_document", f"{d['filename']}: {res.get('doc_type')}, {len(res.get('accepted_proposals', []))} proposals", "documents")
+    return compact(res)
+
+
+@agent.tool
+async def ask_document(ctx: RunContext[ManagerDeps], document_id: int, question: str) -> dict:
+    """Answer a question from an uploaded file (e.g. 'when does the permit expire?', 'what are the penalty clauses?',
+    'what land price does the Excel model use?'). Returns an answer with verbatim quotes."""
+    from .document_agent import ask
+    p = _project(ctx)
+    d = store.get_document(document_id)
+    if d["project_id"] != p["id"]:
+        return {"error": "That document belongs to another project."}
+    try:
+        res = await ask(ctx.deps.ctx, document_id, question)
+    except LimitReached as exc:
+        ctx.deps.ctx.limit_hit = {"kind": exc.kind, "detail": exc.detail}
+        return {"status": "limit_reached", "message": exc.detail}
+    _log(ctx, "ask_document", f"{d['filename']}: {question[:60]}", "documents")
+    return {k: res.get(k) for k in ("answer", "quotes", "found_in_document", "confidence")}
+
+
+@agent.tool
 async def run_investment_committee(ctx: RunContext[ManagerDeps]) -> dict:
     """Run the Investment Committee (two challenger agents, then the chair). Use only when the user asks for an IC review."""
     from .committee import run_committee
@@ -378,8 +428,8 @@ async def run_investment_committee(ctx: RunContext[ManagerDeps]) -> dict:
 
 
 # ----------------------------------------------------------------------------- run a chat turn
-def _history(pid: int | None, limit: int = 6) -> list:
-    msgs = store.list_messages(pid, limit=limit)
+def _history(pid: int | None, owner: str | None, limit: int = 6) -> list:
+    msgs = store.list_messages(pid, limit=limit, owner=owner)
     hist: list = []
     for m in msgs:
         if m["role"] == "user":
@@ -394,10 +444,10 @@ def _history(pid: int | None, limit: int = 6) -> list:
 async def run_chat(project_id: int | None, message: str, ctx: TurnContext) -> dict:
     deps = ManagerDeps(ctx=ctx, project_id=project_id)
     snapshot = services.summarize_for_llm(store.get_project(project_id)) if project_id else {"project": None,
-               "projects": [{"id": p["id"], "name": p["name"]} for p in store.list_projects()]}
+               "projects": [{"id": p["id"], "name": p["name"]} for p in store.list_projects(ctx.owner)]}
     prompt = f"<project_snapshot>\n{json.dumps(snapshot, ensure_ascii=False, default=str)}\n</project_snapshot>\n\nUser message:\n{message}"
-    history = _history(project_id)
-    store.add_message(project_id, "user", message)
+    history = _history(project_id, ctx.owner)
+    store.add_message(project_id, "user", message, owner=ctx.owner)
     limits = UsageLimits(request_limit=ctx.limits["max_requests"], tool_calls_limit=ctx.limits["max_tool_calls"],
                          total_tokens_limit=ctx.limits["max_tokens"])
     ctx.emit("thinking", agent="Investment Manager")
@@ -430,7 +480,7 @@ async def run_chat(project_id: int | None, message: str, ctx: TurnContext) -> di
                   "Use **Continue with higher limits** to let me finish.")
     extra = {"tool_log": ctx.tool_log, "changes": ctx.changes, "pending_ids": ctx.pending_ids, "links": ctx.links,
              "usage": ctx.summary(), "limit_hit": ctx.limit_hit, "project_id": deps.project_id}
-    store.add_message(deps.project_id, "assistant", answer, extra)
+    store.add_message(deps.project_id, "assistant", answer, extra, owner=ctx.owner)
     return {"answer": answer, **extra}
 
 
