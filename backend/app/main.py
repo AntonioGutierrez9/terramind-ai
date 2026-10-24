@@ -27,7 +27,7 @@ from engine.registry import DEFAULT_HARD_COST_SPLIT, PROFILE_CHOICES, REGISTRY, 
 from engine.validation import ValidationError
 
 from . import auth, documents, seed, services, store
-from .agents.runtime import CURRENT_OWNER
+from .agents.runtime import CURRENT_LANG, CURRENT_OWNER
 from .config import DEFAULT_LIMITS, FRONTEND_DIST, ai_available, api_key_status
 from .db import get_conn
 
@@ -54,6 +54,14 @@ def _project_of(kind: str, ident: int) -> int | None:
 @app.middleware("http")
 async def ownership(request: Request, call_next):
     path = request.url.path
+    lang_token = CURRENT_LANG.set("es" if request.headers.get("x-lang", "").lower().startswith("es") else "en")
+    try:
+        return await _ownership(request, call_next, path)
+    finally:
+        CURRENT_LANG.reset(lang_token)
+
+
+async def _ownership(request: Request, call_next, path: str):
     if not path.startswith("/api/") or path.startswith(PUBLIC_API):
         return await call_next(request)
     owner = auth.owner_key(request)

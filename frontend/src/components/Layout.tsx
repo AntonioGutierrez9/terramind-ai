@@ -9,6 +9,7 @@ import { Welcome, useAuth } from '../auth'
 import { api, notifyProjectChanged, onProjectChanged, type Json } from '../api'
 import { useHealth, useProjectData, type ProjectData } from '../state'
 import ChatPanel from './ChatPanel'
+import LangSwitch from './LangSwitch'
 import CustomVariables from './CustomVariables'
 import { StatusBadge } from './ui'
 
@@ -83,7 +84,7 @@ export default function Layout() {
       </aside>
       <div className="main">
         <div className="topbar">
-          <select className="input" style={{ width: 290 }} value={pid ?? ''} onChange={(e) => e.target.value ? nav(`/p/${e.target.value}/model`) : nav('/')}>
+          <select className="input" style={{ flex: '0 1 290px', minWidth: 130 }} value={pid ?? ''} onChange={(e) => e.target.value ? nav(`/p/${e.target.value}/model`) : nav('/')}>
             <option value="">All projects (portfolio)</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
@@ -95,6 +96,7 @@ export default function Layout() {
             </a>
           )}
           {pid && <UndoButton pid={pid} />}
+          <LangSwitch />
           <AccountMenu />
           <button className="btn" onClick={() => setChatOpen((o) => !o)}>
             {chatOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />} AI Assistant
@@ -112,7 +114,7 @@ export default function Layout() {
 
 function ProjectBadges({ p }: { p: Json }) {
   return (
-    <div className="row" style={{ gap: 6 }}>
+    <div className="row" style={{ gap: 6, minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
       <span className="badge">{p.status}</span>
       {p.profile?.demo && <span className="badge demo">fictional demo</span>}
       {p.model_status === 'ok' ? <StatusBadge level="good">model complete</StatusBadge> : <StatusBadge level="amber">model incomplete</StatusBadge>}
@@ -169,7 +171,7 @@ function AccountMenu() {
   const [signup, setSignup] = useState(false)
   if (guest && !user) {
     return (
-      <div className="row" style={{ gap: 6, position: 'relative' }}>
+      <div className="row" style={{ gap: 6, position: 'relative', flexShrink: 0 }}>
         <span className="badge default"><UserRound size={11} /> Guest</span>
         <button className="btn sm" onClick={() => setSignup((v) => !v)}>Save my work</button>
         {signup && (

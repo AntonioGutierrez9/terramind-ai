@@ -26,7 +26,7 @@ from engine.validation import ValidationError, validate_value
 from .. import store
 from ..config import build_model
 from ..documents import chunks_for_question
-from .runtime import TurnContext, scrub_obj, wrap_untrusted
+from .runtime import TurnContext, lang_note, scrub_obj, wrap_untrusted
 
 PROMPT = (Path(__file__).resolve().parents[2] / "prompts" / "document.md").read_text(encoding="utf-8")
 SETTINGS = {"openai_reasoning_effort": "low"}
@@ -153,7 +153,7 @@ def _current_values(project: dict) -> dict:
 def _prompt_parts(doc: dict, project: dict, extra: str) -> list:
     header = (f"Project: {project['name']} ({project['profile'].get('neighborhood') or ''}, {project['profile'].get('city') or ''}); "
               f"currency {project['profile'].get('currency') or 'MXN'}.\nCurrent assumption values: {json.dumps(_current_values(project), default=str)[:3500]}\n"
-              f"Registry keys you may propose:\n{_registry_lines()}\n\nFile: {doc['filename']} ({doc['kind']}).\n{extra}")
+              f"Registry keys you may propose:\n{_registry_lines()}\n\nFile: {doc['filename']} ({doc['kind']}).\n{extra}{lang_note()}")
     if doc["meta"].get("needs_vision"):
         data = Path(doc["path"]).read_bytes()
         mime = "application/pdf" if doc["kind"] == "pdf" else doc["meta"].get("mime", "image/png")

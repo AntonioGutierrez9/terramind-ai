@@ -3,10 +3,13 @@
 
 export type Json = any
 
+import { getLang } from './i18n'
+const langHeader = () => ({ 'X-Lang': getLang() })
+
 async function req<T = Json>(method: string, url: string, body?: unknown): Promise<T> {
   const r = await fetch(url, {
     method,
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    headers: body !== undefined ? { 'Content-Type': 'application/json', ...langHeader() } : langHeader(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   const text = await r.text()
@@ -48,7 +51,7 @@ export async function uploadDocument(pid: number, file: File, analyze = true) {
   const fd = new FormData()
   fd.append('file', file)
   fd.append('analyze', analyze ? 'true' : 'false')
-  const r = await fetch(`/api/projects/${pid}/documents`, { method: 'POST', body: fd })
+  const r = await fetch(`/api/projects/${pid}/documents`, { method: 'POST', body: fd, headers: langHeader() })
   const text = await r.text()
   const data = text ? JSON.parse(text) : null
   if (!r.ok) throw new Error((data && data.detail) || `${r.status} ${r.statusText}`)
@@ -62,7 +65,7 @@ export async function streamChat(
   onEvent: (ev: { type: string; data: Json }) => void,
   signal?: AbortSignal,
 ) {
-  const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
+  const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json', ...langHeader() }, body: JSON.stringify(body), signal })
   if (!r.ok || !r.body) {
     const t = await r.text()
     let msg = t

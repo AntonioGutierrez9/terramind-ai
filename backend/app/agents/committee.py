@@ -23,7 +23,7 @@ from engine import analysis
 
 from .. import services, store
 from ..config import build_model
-from .runtime import TurnContext
+from .runtime import TurnContext, lang_note
 
 PROMPTS = Path(__file__).resolve().parents[2] / "prompts"
 _sections = (PROMPTS / "committee.md").read_text(encoding="utf-8").split("## ")
@@ -106,7 +106,7 @@ async def run_advisor(ctx: TurnContext, project: dict, rec: dict) -> dict:
         return {"headline": "Complete the model first.", "priorities": [], "quick_wins": [], "avoid": [], "data_gaps": [i["detail"] for i in rec.get("issues", [])]}
     ctx.check_budget(extra_usd=0.004)
     t0 = time.perf_counter()
-    r = await advisor_agent.run(json.dumps(slim_recommendations(rec), default=str), model=build_model(), model_settings=SETTINGS)
+    r = await advisor_agent.run(json.dumps(slim_recommendations(rec), default=str) + lang_note(), model=build_model(), model_settings=SETTINGS)
     ctx.record("Improvement Advisor", r.usage, time.perf_counter() - t0, purpose="advisor")
     return r.output.model_dump()
 
@@ -198,15 +198,15 @@ async def run_committee(ctx: TurnContext, project: dict) -> dict:
     ctx.emit("specialist_start", agent="Investment Committee", kind="committee")
     t0 = time.perf_counter()
     uw, rk = await asyncio.gather(
-        underwriting_challenger.run(f"Packet:\n{pj}", model=model, model_settings=SETTINGS),
-        risk_challenger.run(f"Packet:\n{pj}", model=model, model_settings=SETTINGS),
+        underwriting_challenger.run(f"Packet:\n{pj}{lang_note()}", model=model, model_settings=SETTINGS),
+        risk_challenger.run(f"Packet:\n{pj}{lang_note()}", model=model, model_settings=SETTINGS),
     )
     dt = time.perf_counter() - t0
     ctx.record("IC Underwriting Challenger", uw.usage, dt, purpose="committee")
     ctx.record("IC Capital & Risk Challenger", rk.usage, dt, purpose="committee")
     t1 = time.perf_counter()
     chair_in = (f"Packet:\n{pj}\n\nUnderwriting challenger:\n{uw.output.model_dump_json()}\n\n"
-                f"Capital & risk challenger:\n{rk.output.model_dump_json()}")
+                f"Capital & risk challenger:\n{rk.output.model_dump_json()}{lang_note()}")
     ch = await chair.run(chair_in, model=model, model_settings=SETTINGS)
     ctx.record("IC Chair", ch.usage, time.perf_counter() - t1, purpose="committee")
     memo = ch.output.model_dump()
@@ -246,6 +246,6 @@ async def run_asset_commentary(ctx: TurnContext, project: dict, am: dict) -> dic
     slim = {"as_of_month": am["as_of_month"], "drivers": am["drivers"], "alerts": am["alerts"],
             "variances": am["variances"], "comparison": [{**c, "underwriting": c["underwriting"], "updated": c["updated"]} for c in am["comparison"]]}
     t0 = time.perf_counter()
-    r = await asset_agent.run(json.dumps(slim, default=str), model=build_model(), model_settings=SETTINGS)
+    r = await asset_agent.run(json.dumps(slim, default=str) + lang_note(), model=build_model(), model_settings=SETTINGS)
     ctx.record("Asset Management", r.usage, time.perf_counter() - t0, purpose="asset_management")
     return r.output.model_dump()

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Bot, Check, Loader2, Mic, MicOff, Paperclip, Send, ShieldCheck, Wrench, X } from 'lucide-react'
 import { api, notifyProjectChanged, streamChat, uploadDocument, type Json } from '../api'
 import { useHealth } from '../state'
+import { getLang, t } from '../i18n'
 
 interface Msg { role: 'user' | 'assistant'; content: string; extra?: Json }
 
@@ -63,7 +64,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   const [live, setLive] = useState<Json[]>([])
   const [listening, setListening] = useState(false)
   const [micError, setMicError] = useState<string | null>(null)
-  const [lang, setLang] = useState<'en-US' | 'es-MX'>('en-US')
+  const [lang, setLang] = useState<'en-US' | 'es-MX'>(getLang() === 'es' ? 'es-MX' : 'en-US')
   const recRef = useRef<Json>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState<string | null>(null)
@@ -169,8 +170,8 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
         {msgs.length === 0 && (
           <div className="col" style={{ gap: 10 }}>
             <div className="msg assistant">
-              <p>I manage your project data through the platform's tools. Tell me about a deal or ask for a change — I update the fields, recalculate the deterministic model and show what changed.</p>
-              <p className="small muted">Material changes (financing, legal limits, approvals) wait for your confirmation click.</p>
+              <p>{t("I manage your project data through the platform's tools. Tell me about a deal or ask for a change — I update the fields, recalculate the deterministic model and show what changed.")}</p>
+              <p className="small muted">{t('Material changes (financing, legal limits, approvals) wait for your confirmation click.')}</p>
             </div>
           </div>
         )}

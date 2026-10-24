@@ -24,7 +24,7 @@ from engine.registry import REGISTRY
 from .. import store
 from ..config import RESEARCH_CACHE_DAYS, build_model
 from ..services import comps_summary
-from .runtime import LimitReached, TurnContext, scrub_obj
+from .runtime import CURRENT_LANG, LimitReached, TurnContext, lang_note, scrub_obj
 
 PROMPTS = Path(__file__).resolve().parents[2] / "prompts"
 RULES = (PROMPTS / "_research_rules.md").read_text(encoding="utf-8")
@@ -272,7 +272,7 @@ async def run_specialist(ctx: TurnContext, kind: str, project: dict, request: st
     if kind not in SPECS:
         return {"status": "error", "message": f"unknown specialist '{kind}'"}
     request = (request or default_request(kind, project)).strip()[:600]
-    key = cache_key(kind, request)
+    key = cache_key(kind, request + ("|es" if CURRENT_LANG.get() == "es" else ""))
     name = AGENT_NAMES[kind]
     if key in ctx.specialist_requests_seen:
         return {"status": "duplicate", "message": "This exact research request already ran in this turn."}
@@ -295,7 +295,7 @@ async def run_specialist(ctx: TurnContext, kind: str, project: dict, request: st
     t0 = time.perf_counter()
     result = await _agent(kind).run(f"Research request: {request}\nProject location context: "
                                     f"{project['profile'].get('neighborhood') or ''}, {project['profile'].get('city') or ''}, "
-                                    f"{project['profile'].get('country') or ''}.",
+                                    f"{project['profile'].get('country') or ''}.{lang_note()}",
                                     usage_limits=_specialist_limits())
     usage = ctx.record(name, result.usage, time.perf_counter() - t0, result.all_messages(), purpose=f"research:{kind}")
     payload = postprocess(kind, result.output.model_dump())

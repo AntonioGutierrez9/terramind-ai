@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { Building2, Leaf, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
 import { api } from './api'
+import LangSwitch from './components/LangSwitch'
 
 export interface User { id: number; first_name: string; last_name: string; name: string; email: string }
 interface AuthState { user: User | null; guest: boolean; logout: () => Promise<void>; refresh: () => Promise<void> }
@@ -104,7 +105,10 @@ export function Welcome({ onDone, initialTab = 'signin', inline = false }: { onD
         </div>
         <div style={{ marginTop: 'auto', fontSize: 12, color: '#8fa3c2' }}>Demo projects are fictional. Decision support only, not investment or legal advice.</div>
       </div>
-      <div style={{ display: 'grid', placeItems: 'center', padding: 32 }}>{form}</div>
+      <div style={{ display: 'grid', placeItems: 'center', padding: 32, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 20, right: 24 }}><LangSwitch /></div>
+        {form}
+      </div>
     </div>
   )
 }

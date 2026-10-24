@@ -634,6 +634,8 @@ async def run_chat(project_id: int | None, message: str, ctx: TurnContext) -> di
     deps = ManagerDeps(ctx=ctx, project_id=project_id)
     snapshot = services.summarize_for_llm(store.get_project(project_id)) if project_id else {"project": None,
                "projects": [{"id": p["id"], "name": p["name"]} for p in store.list_projects(ctx.owner)]}
+    from .runtime import CURRENT_LANG
+    snapshot["interface_language"] = "Spanish" if CURRENT_LANG.get() == "es" else "English"
     prompt = f"<project_snapshot>\n{json.dumps(snapshot, ensure_ascii=False, default=str)}\n</project_snapshot>\n\nUser message:\n{message}"
     history = _history(project_id, ctx.owner)
     store.add_message(project_id, "user", message, owner=ctx.owner)

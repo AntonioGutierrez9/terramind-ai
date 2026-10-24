@@ -22,6 +22,13 @@ from ..config import DEFAULT_LIMITS, MODEL_NAME, cost_usd
 
 
 CURRENT_OWNER: contextvars.ContextVar[str | None] = contextvars.ContextVar("terramind_owner", default=None)
+CURRENT_LANG: contextvars.ContextVar[str] = contextvars.ContextVar("terramind_lang", default="en")
+
+
+def lang_note() -> str:
+    """Instruction appended to agent inputs when the interface is in Spanish."""
+    return ("\n\nIMPORTANT: The user's interface is in Spanish. Write every text field of your answer in Mexican Spanish "
+            "(keep official names, quotes and acronyms such as TIR, VPN, LTC as they are)." if CURRENT_LANG.get() == "es" else "")
 
 
 class LimitReached(Exception):
