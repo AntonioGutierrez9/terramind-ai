@@ -67,11 +67,11 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   }, [projectId])
   useEffect(() => { bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs, live, busy])
 
-  const send = async (text?: string, mult = 1) => {
+  const send = async (text?: string, mult = 1, isRetry = false) => {
     const message = (text ?? input).trim()
     if (!message || busy) return
     setInput('')
-    if (mult === 1) setMsgs((m) => [...m, { role: 'user', content: message }])
+    if (!isRetry) setMsgs((m) => [...m, { role: 'user', content: message }])
     setBusy(true)
     setLive([])
     try {
@@ -87,7 +87,15 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
         }
       })
     } catch (e) {
-      setMsgs((m) => [...m, { role: 'assistant', content: `⚠️ ${(e as Error).message}` }])
+      const raw = (e as Error).message || ''
+      const offline = raw.includes('Failed to fetch') || raw.includes('NetworkError') || raw.includes('502') || raw.includes('network')
+      setMsgs((m) => [...m, {
+        role: 'assistant',
+        content: offline
+          ? '⚠️ I lost the connection to the TerraMind server before I could answer. Make sure the server is still running (`python run.py`), then press **Retry**.'
+          : `⚠️ ${raw}`,
+        extra: offline ? { retry_failed: message } : undefined,
+      }])
     } finally {
       setBusy(false)
       setLive([])
@@ -156,7 +164,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
             </div>
           </div>
         )}
-        {msgs.map((m, i) => <Message key={i} m={m} onRetry={(t) => send(t, 2)} isLast={i === msgs.length - 1} />)}
+        {msgs.map((m, i) => <Message key={i} m={m} onRetry={(t, mult = 2) => send(t, mult, true)} isLast={i === msgs.length - 1} />)}
         {busy && (
           <div className="col" style={{ gap: 6 }}>
             {live.filter((e) => ['tool_start', 'tool_end', 'specialist_start', 'specialist_done'].includes(e.type)).slice(-6).map((e, i) => (
@@ -202,7 +210,7 @@ export default function ChatPanel({ projectId, onClose }: { projectId: number | 
   )
 }
 
-function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string) => void; isLast: boolean }) {
+function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string, mult?: number) => void; isLast: boolean }) {
   if (m.role === 'user') return <div className="msg user">{m.content}</div>
   const x = m.extra || {}
   return (
@@ -227,6 +235,9 @@ function Message({ m, onRetry, isLast }: { m: Msg; onRetry: (t: string) => void;
           <div><b>Limit reached:</b> {x.limit_hit.detail}<br />
             <button className="btn sm" style={{ marginTop: 6 }} onClick={() => onRetry(x.retry)}>Continue with higher limits (2×)</button></div>
         </div>
+      )}
+      {x.retry_failed && isLast && (
+        <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => onRetry(x.retry_failed, 1)}>Retry</button>
       )}
       {x.links?.length > 0 && x.project_id && (
         <div className="row wrap" style={{ gap: 6 }}>

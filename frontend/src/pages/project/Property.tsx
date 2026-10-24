@@ -60,7 +60,7 @@ export default function Property() {
       nav(`/p/${r.id}/property`)
     } catch (e) { setNote((e as Error).message) } finally { setBusy(null) }
   }
-  const query = [prof.address, prof.neighborhood, prof.city, prof.country].filter(Boolean).join(', ')
+  const query = [prof.address, prof.neighborhood, prof.municipality, prof.city, prof.country].filter(Boolean).join(', ')
 
   return (
     <div>
@@ -70,7 +70,7 @@ export default function Property() {
 
       <div className="grid g3" style={{ marginBottom: 16 }}>
         <Card title="Location" className="span2" bodyClass="">
-          <SiteMap lat={prof.lat} lon={prof.lon} query={query} height={300} />
+          <SiteMap lat={prof.lat} lon={prof.lon} query={query} height={300} projectId={p.id} precision={prof.geo_precision} />
         </Card>
         <PropertyFacts data={data} />
       </div>

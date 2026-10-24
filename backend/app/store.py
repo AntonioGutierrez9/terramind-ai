@@ -87,7 +87,7 @@ def project_owner(pid: int) -> tuple[bool, str | None]:
 
 def update_profile(pid: int, fields: dict, actor: str = "user") -> dict:
     p = get_project(pid)
-    allowed = {"name", "country", "state", "city", "neighborhood", "municipality", "address", "lat", "lon", "currency", "area_unit", "zoning_code",
+    allowed = {"name", "country", "state", "city", "neighborhood", "municipality", "address", "lat", "lon", "currency", "area_unit", "zoning_code", "geo_precision",
                "property_type", "strategy", "business_model", "ownership_status", "horizon_years", "details", "start_date"}
     bad = set(fields) - allowed
     if bad:

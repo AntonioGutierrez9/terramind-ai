@@ -39,7 +39,7 @@ app.include_router(auth.router)
 # Unknown or foreign ids return 404 so the existence of other people's projects is not revealed.
 OWNED_ROUTES = [(re.compile(r"^/api/projects/(\d+)"), "project"), (re.compile(r"^/api/pending/(\d+)"), "pending"),
                 (re.compile(r"^/api/variants/(\d+)"), "variant"), (re.compile(r"^/api/documents/(\d+)"), "document")]
-PUBLIC_API = ("/api/health", "/api/meta", "/api/auth/", "/api/geocode")
+PUBLIC_API = ("/api/health", "/api/meta", "/api/auth/", "/api/geocode")  # geocode checks project ownership itself
 
 
 def _project_of(kind: str, ident: int) -> int | None:
@@ -192,7 +192,8 @@ def changes(pid: int, body: ChangesIn):
 
 
 @app.post("/api/projects/{pid}/suggested-defaults")
-def apply_suggested(pid: int, keys: list[str] | None = None):
+def apply_suggested(pid: int, body: dict | None = None):
+    keys = (body or {}).get("keys")
     p = store.get_project(pid)
     mode = model_mode(p["profile"])
     todo = []
@@ -599,23 +600,63 @@ def delete_doc(doc_id: int):
 
 
 # ----------------------------------------------------------------------------- geocoding (map)
-_geo_cache: dict[str, Any] = {}
+COUNTRY_CODES = {"mexico": "mx", "méxico": "mx", "united states": "us", "usa": "us", "colombia": "co", "spain": "es", "españa": "es"}
+
+
+async def _nominatim(client: httpx.AsyncClient, q: str, country: str | None) -> dict | None:
+    """One Nominatim lookup with persistent caching (OSM usage policy: low volume, identify the app, cache results)."""
+    key = f"geo:{country or ''}:{q.lower()}"
+    cached = store.get_setting(key)
+    if cached is not None:
+        return cached or None
+    params = {"q": q, "format": "json", "limit": 1}
+    if country:
+        params["countrycodes"] = country
+    for attempt in range(2):  # one retry on network errors / rate limiting
+        try:
+            r = await client.get("https://nominatim.openstreetmap.org/search", params=params)
+            if r.status_code == 200:
+                data = r.json()
+                hit = {"lat": float(data[0]["lat"]), "lon": float(data[0]["lon"]), "display_name": data[0]["display_name"]} if data else {}
+                store.set_setting(key, hit)
+                return hit or None
+        except (httpx.HTTPError, ValueError):
+            pass
+        await asyncio.sleep(1.2)
+    raise HTTPException(503, "The map service (OpenStreetMap Nominatim) did not respond. Try again in a moment.")
 
 
 @app.get("/api/geocode")
-async def geocode(q: str):
-    q = q.strip()[:200]
-    if q in _geo_cache:
-        return _geo_cache[q]
-    try:
-        async with httpx.AsyncClient(timeout=8, headers={"User-Agent": "TerraMindAI/1.0 (course project)"}) as client:
-            r = await client.get("https://nominatim.openstreetmap.org/search", params={"q": q, "format": "json", "limit": 1})
-            data = r.json()
-    except Exception:  # noqa: BLE001
-        return {"found": False}
-    out = {"found": bool(data), **({"lat": float(data[0]["lat"]), "lon": float(data[0]["lon"]), "display_name": data[0]["display_name"]} if data else {})}
-    _geo_cache[q] = out
-    return out
+async def geocode(q: str = "", project_id: int | None = None, request: Request = None):
+    """Locate an address, falling back to street → colonia/alcaldía → city. If project_id is given (and owned by the
+    caller), the location found is saved to the project so the map never needs to look it up again."""
+    prof: dict = {}
+    if project_id is not None:
+        owner = auth.owner_key(request)
+        if not owner or store.project_owner(project_id) != (True, owner):
+            raise HTTPException(404, "Not found.")
+        prof = store.get_project(project_id)["profile"]
+    country = COUNTRY_CODES.get((prof.get("country") or "").strip().lower()) or ("mx" if "mexico" in q.lower() or "méxico" in q.lower() else None)
+    city = ", ".join(x for x in (prof.get("city"), prof.get("state")) if x)
+    street = re.sub(r"\s+\d+[\w\-]*$", "", (prof.get("address") or "").split(",")[0]).strip()
+    candidates = [(q.strip()[:200], "address")] if q.strip() else []
+    if prof:
+        candidates += [(", ".join(x for x in (prof.get("address"), prof.get("neighborhood"), city) if x), "address"),
+                       (", ".join(x for x in (street, prof.get("neighborhood"), city) if x), "street"),
+                       (", ".join(x for x in (prof.get("neighborhood"), prof.get("municipality"), city) if x), "neighborhood"),
+                       (city, "city")]
+    seen = set()
+    async with httpx.AsyncClient(timeout=8, headers={"User-Agent": "TerraMindAI/1.0 (Yale SOM course project)"}) as client:
+        for cand, precision in candidates:
+            if not cand or cand in seen:
+                continue
+            seen.add(cand)
+            hit = await _nominatim(client, cand, country)
+            if hit:
+                if project_id is not None:
+                    store.update_profile(project_id, {"lat": hit["lat"], "lon": hit["lon"], "geo_precision": precision}, actor="system")
+                return {"found": True, **hit, "precision": precision, "query": cand}
+    return {"found": False}
 
 
 # ----------------------------------------------------------------------------- static frontend

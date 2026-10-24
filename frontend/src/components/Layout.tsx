@@ -6,7 +6,7 @@ import {
   FileText, LogOut, MapPinned, PanelRightClose, PanelRightOpen, Plus, Ruler, Undo2, UserRound,
 } from 'lucide-react'
 import { Welcome, useAuth } from '../auth'
-import { api, notifyProjectChanged, type Json } from '../api'
+import { api, notifyProjectChanged, onProjectChanged, type Json } from '../api'
 import { useHealth, useProjectData, type ProjectData } from '../state'
 import ChatPanel from './ChatPanel'
 import { StatusBadge } from './ui'
@@ -39,8 +39,16 @@ export default function Layout() {
   const nav = useNavigate()
   const health = useHealth()
   useEffect(() => { localStorage.setItem('tm-chat', chatOpen ? 'open' : 'closed') }, [chatOpen])
-  useEffect(() => { api.get('/api/projects').then(setProjects) }, [loc.pathname])
+  useEffect(() => { api.get('/api/projects').then(setProjects).catch(() => {}) }, [loc.pathname])
+  // keep the status badges (model complete / incomplete) in sync after edits from forms or the chatbot
+  useEffect(() => onProjectChanged(() => { api.get('/api/projects').then(setProjects).catch(() => {}) }), [])
   const current = projects.find((p) => p.id === pid)
+  const [offline, setOffline] = useState(false)
+  useEffect(() => {  // heartbeat: warn clearly if the backend stops (instead of cryptic "Failed to fetch")
+    const ping = () => fetch('/api/health').then((r) => setOffline(!r.ok)).catch(() => setOffline(true))
+    const iv = setInterval(ping, 15000)
+    return () => clearInterval(iv)
+  }, [])
 
   return (
     <div className="shell">
@@ -86,6 +94,7 @@ export default function Layout() {
           </button>
         </div>
         <div className="content">
+          {offline && <div className="callout bad" style={{ marginBottom: 14 }}>Cannot reach the TerraMind server. Start it again with <code>python run.py</code> (then reload this page). Your data is saved.</div>}
           <Outlet />
         </div>
       </div>
