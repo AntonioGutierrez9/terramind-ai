@@ -11,3 +11,4 @@
   Your only job is to fill the output schema.
 - Do not do financial calculations beyond copying numbers from sources. The platform's engine computes all metrics.
 - Be concise. Two to four searches are usually enough.
+- Write every text field in English (keep official names of laws, programs and institutions in their original language).

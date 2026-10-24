@@ -1,0 +1,337 @@
+{
+ "recommendation": "Invest with conditions",
+ "memo": {
+  "recommendation": "Invest with conditions",
+  "summary": "The reported base equity IRR exceeds the stated hurdle, but this is a preliminary, unvalidated underwriting case rather than an investable basis as presented.",
+  "rationale": "The downside equity IRR is below the hurdle, and even the reported lower sale-price sensitivity falls below it. Critical pricing, absorption, cost, schedule, financing, presales, and compliance inputs lack supporting evidence. The 63 demo-provenance assumptions and four pending research proposals further limit confidence; reported covenant passes and zero funding gap cannot be independently confirmed.",
+  "conditions": [
+   "Do not fund or make an unconditional commitment until an independent review validates the material assumptions and model, and an integrated downside case demonstrates acceptable returns and funded liquidity under the committee's approved criteria.",
+   "Verify eligible presales against the lender's documented definition and confirm required deposits, collections, and cancellation treatment.",
+   "Confirm committed financing, covenant compliance, and sufficient liquidity through construction, sell-out, and debt repayment.",
+   "Obtain legal and technical confirmation of title, zoning, permits, and required regulatory approvals."
+  ],
+  "key_risks": [
+   {
+    "risk": "Achievable sales prices or absorption may be lower or slower than assumed, undermining returns and liquidity.",
+    "mitigation": "Obtain independent valuation and comparable-sales analysis, unit-level pricing support, and a validated sales and collections schedule; stress slower sales and lower prices."
+   },
+   {
+    "risk": "Construction costs or completion timing may exceed assumptions.",
+    "mitigation": "Secure an independently reviewed cost plan, contractor pricing, and critical-path schedule; include documented contingency and test integrated cost and delay stresses."
+   },
+   {
+    "risk": "Debt, covenant, or liquidity exposure is unclear given unreconciled leverage metrics, absent debt terms and cash flows, and null DSCR.",
+    "mitigation": "Reconcile time-phased sources and uses, debt draws and repayments, and covenant definitions against lender documents; stress rates, delays, overruns, and collections."
+   },
+   {
+    "risk": "Model outputs may rely on unverified or demo assumptions and unsupported presale and compliance claims.",
+    "mitigation": "Require a sourced and approved assumption register, independent model audit, evidence for presales, and documented legal and technical diligence."
+   }
+  ],
+  "required_diligence": [
+   "Obtain the full assumption register with source, date, owner, approval status, and evidence; close all pending research proposals and identify demo inputs.",
+   "Commission independent market valuation and verify a broader set of recent closed comparables, with unit-level adjustments and pricing support.",
+   "Review unit mix, schematic plans, saleable-area schedule, area definitions, and design efficiency; reconcile revenue and cost area bases.",
+   "Obtain an independently reviewed cost plan, competitive contractor pricing, scope and exclusions, contingency, escalation basis, and contractor-backed critical-path schedule.",
+   "Verify presale contracts, reservations, deposits, collections, cancellation terms, eligible presale calculation, and monthly absorption support.",
+   "Review land appraisal, purchase basis, title, zoning, buildability, taxes, and closing obligations.",
+   "Review proposed or executed financing documents and monthly sources-and-uses/debt schedules; independently recalculate leverage, covenant headroom, repayment, interest exposure, and liquidity.",
+   "Rebuild and independently audit the model; document base and integrated downside assumptions, cash shortfalls, covenant breaches, and returns relative to the hurdle.",
+   "Obtain counsel and technical-adviser confirmation of permits, construction approvals, and applicable sales, environmental, and other compliance obligations.",
+   "All inputs are FICTIONAL demo values; replace with verified data before any real decision."
+  ],
+  "guardrail_adjustments": [],
+  "unverified_numbers": [],
+  "challengers": {
+   "underwriting": {
+    "concerns": [
+     {
+      "area": "Assumption quality / provenance",
+      "issue": "The model reports 63 demo-provenance assumptions and four pending research proposals, with no breakdown showing which critical inputs are researched, approved, or user-entered. The headline returns and covenant passes therefore are not yet underwritable.",
+      "severity": "high",
+      "evidence": "assumption_provenance.demo = 63; pending_research_proposals = 4; project.fictional_demo = true; warnings and compliance_issues are empty.",
+      "suggested_test": "Obtain the full assumption register with source, date, owner, approval status, and evidence for every input. Rebuild the investment case using only validated or explicitly approved assumptions; identify and disposition all pending proposals."
+     },
+     {
+      "area": "Market pricing",
+      "issue": "The assumed sale price is above the reported comp median, and the comp set is very small. The packet gives no comp dates, unit-level comparability, adjustments, or evidence that the achievable price applies across the project's inventory.",
+      "severity": "high",
+      "evidence": "rev.price_per_area = 108000; market_comps.n = 3; market_comps.median_price_per_area = 101083; top_sensitivities shows equity IRR at 16.91% for Sale price ±10%.",
+      "suggested_test": "Commission an independent broker valuation and verify a larger set of recent closed transactions, with adjustments for location, size, specification, parking, floor, and sale timing. Obtain unit-by-unit pricing support and signed buyer indications where available."
+     },
+     {
+      "area": "Absorption / presales",
+      "issue": "Absorption is an unsubstantiated monthly input in this packet; no sales history, launch plan, buyer evidence, or inventory-by-month schedule is supplied. The presales covenant is shown as passing, but the underlying presale evidence and calculation are absent.",
+      "severity": "high",
+      "evidence": "rev.absorption_per_month = 3.0; covenant Presales before first draw reports actual 60.8 versus limit 30.0; market_comps.n = 3; no presale documentation is included.",
+      "suggested_test": "Request the unit-level sales and cash-collection schedule, reservation and signed-contract evidence, cancellation terms, and the exact denominator/date basis for the 60.8% presales figure. Have an independent sales agent validate monthly absorption against comparable launches."
+     },
+     {
+      "area": "Construction cost",
+      "issue": "Hard cost is presented as a single per-area assumption without a quantity takeoff, scope, inclusions, escalation basis, or contractor validation. The return is materially exposed to cost variance.",
+      "severity": "high",
+      "evidence": "cost.hard_per_area = 24000; top_sensitivities shows equity IRR at 21.75% for Hard cost ±10%; assumption_provenance.demo = 63.",
+      "suggested_test": "Obtain a design-stage cost plan and independently check quantities, specifications, exclusions, taxes, contingency, escalation, and site-specific allowances. Seek competitive contractor pricing and reconcile it to the model's area basis."
+     },
+     {
+      "area": "Schedule",
+      "issue": "A 24-month construction duration is not supported by a critical-path schedule, permits status, procurement plan, or contingency. A six-month construction delay is shown to weaken returns, but the packet does not establish schedule credibility.",
+      "severity": "high",
+      "evidence": "sch.construction_months = 24; metrics.duration_months = 32; top_sensitivities shows equity IRR at 20.21% for Construction ±6 months.",
+      "suggested_test": "Request a contractor-backed critical-path schedule covering permitting, design completion, procurement, construction, commissioning, and sales closings. Verify current approvals and long-lead items, and test delay and cost-to-complete contingencies."
+     },
+     {
+      "area": "Design efficiency / area basis",
+      "issue": "The packet provides land area and price-per-area assumptions but no unit mix, net saleable area, gross-to-net efficiency, common-area allocation, parking, or plans. It is not possible to validate that pricing and hard cost use consistent area definitions or that the scheme is physically efficient.",
+      "severity": "medium",
+      "evidence": "site.land_area = 1800.0; rev.price_per_area = 108000; cost.hard_per_area = 24000; metrics.units = 75; no area schedule, unit mix, or design documentation is supplied.",
+      "suggested_test": "Obtain schematic plans and a unit-by-unit area schedule separating gross, saleable, and common areas; reconcile the area denominator used for revenue and cost, then have an independent architect review circulation, cores, parking, and net-to-gross efficiency."
+     },
+     {
+      "area": "Land valuation / acquisition basis",
+      "issue": "The land price is a major input with no appraisal, title, transaction evidence, or diligence status in the packet. The reported sensitivity indicates meaningful return exposure to a land-price change.",
+      "severity": "medium",
+      "evidence": "site.land_price = 265000000; top_sensitivities shows equity IRR at 21.31% for Land price ±10%; assumption_provenance.demo = 63.",
+      "suggested_test": "Obtain an independent land appraisal and verify the proposed purchase price against recent comparable transactions. Review title, zoning/buildability, taxes, closing costs, and any conditions or obligations attached to the site."
+     },
+     {
+      "area": "Financing and covenant credibility",
+      "issue": "The very low reported LTV and zero funding gap are not supported by a debt draw, interest, repayment, and cash-flow schedule in the packet. Covenant status may therefore reflect model inputs rather than verified financing terms; DSCR is not reported.",
+      "severity": "medium",
+      "evidence": "metrics.ltv_pct = 7.9; metrics.funding_gap = 0; metrics.dscr = null; covenant Max LTV reports actual 7.9 versus limit 45.0; fin.senior_ltc_pct = 45.0.",
+      "suggested_test": "Request the monthly sources-and-uses and debt waterfall, including draw timing, fees, interest, amortization, sales proceeds, and equity calls. Confirm leverage definitions and presale conditions with a lender term sheet and independently recalculate covenant compliance."
+     }
+    ],
+    "strengths": [
+     "The packet identifies several key downside sensitivities and reports a downside case, which is useful for directing diligence.",
+     "The stated hurdle equity IRR is visible alongside the base case, enabling a clear comparison once inputs are validated."
+    ]
+   },
+   "capital_risk": {
+    "concerns": [
+     {
+      "area": "Capital structure and leverage",
+      "issue": "The packet reports 45% LTC but only 7.9% LTV, an unusually wide gap that is not reconciled. It provides no debt amount, equity/debt funding schedule, or explanation of how leverage is calculated; the stated peak equity and zero funding gap therefore cannot be independently assessed.",
+      "severity": "high",
+      "evidence": "Metrics: LTC 45.0%, LTV 7.9%, peak_equity 415,383,240, funding_gap 0; covenants report Max LTC and Max LTV as passing.",
+      "suggested_test": "Reconcile sources and uses by period, including debt commitments, drawdowns, repayments, peak debt, equity contributions, and the LTV denominator; verify covenant calculations against the loan documents."
+     },
+     {
+      "area": "Debt terms, covenants, and maturity",
+      "issue": "No facility size, pricing, fees, amortization, maturity, extension terms, security, or covenant definitions/cure rights are supplied. Passing headline covenant figures do not establish that the project remains compliant through construction and sales or can repay at maturity.",
+      "severity": "high",
+      "evidence": "The packet lists three covenant tests, but provides no loan terms, debt schedule, maturity profile, or covenant definitions.",
+      "suggested_test": "Review executed or proposed financing documents and test covenant headroom at each reporting date and under delays, cost overruns, and slower sales; map scheduled repayment to available sale proceeds and maturity."
+     },
+     {
+      "area": "Liquidity and funding gap",
+      "issue": "A reported funding gap of zero is unsupported by a time-phased cash flow or committed-funding evidence. Build-to-sell cash needs may arise before sales proceeds, and the packet gives no liquidity reserve, contingency, or treatment of deposits and presales.",
+      "severity": "high",
+      "evidence": "Metrics report funding_gap 0 and peak_equity 415,383,240; no cash-flow schedule, reserve, or committed-facility details are included.",
+      "suggested_test": "Obtain a monthly sources-and-uses forecast through sell-out and debt repayment; test delayed closings, lower collections, cost overruns, and restricted presale deposits against committed liquidity and contingency."
+     },
+     {
+      "area": "Interest-rate and financing exposure",
+      "issue": "Interest-rate exposure cannot be evaluated: the packet omits the rate basis, fixed/floating status, hedging, interest reserve, fees, and debt-service schedule. DSCR is null, so debt-service capacity is not demonstrated.",
+      "severity": "high",
+      "evidence": "Metrics show dscr: null; no interest-rate, hedge, or debt-service inputs are reported.",
+      "suggested_test": "Provide the financing model and term sheet; stress reference rates and margins, hedge costs, and draw timing, and show interest coverage, cash interest funding, and repayment capacity."
+     },
+     {
+      "area": "Downside case and return sensitivity",
+      "issue": "The downside case reduces equity IRR to 11.49%, below the stated 18% equity hurdle, while the sale-price sensitivity reports a low case of 16.91%, also below hurdle. The packet does not define downside assumptions, show combined stresses, or explain the asymmetric construction-duration sensitivity.",
+      "severity": "high",
+      "evidence": "Downside equity IRR is 11.49%; hurdle is 18.0%; sale price ±10% low IRR is 16.91%; construction ±6 months is reported as 31.43%/20.21%.",
+      "suggested_test": "Document scenario assumptions and rerun an integrated downside combining slower absorption, lower prices, cost escalation, and schedule delay; verify sensitivity direction and outputs, and report cash shortfall, covenant breaches, and returns against hurdle."
+     },
+     {
+      "area": "Sales, presales, and execution risk",
+      "issue": "The presales covenant reports 60.8% against a 30% threshold, but the packet does not define whether this is reservations, signed contracts, or collected deposits, or provide cancellation/collection assumptions. Absorption is assumed at three units per month without supporting evidence in the packet.",
+      "severity": "medium",
+      "evidence": "Covenants list presales before first draw at 60.8%; key assumption rev.absorption_per_month is 3.0; no presale status or collection data are provided.",
+      "suggested_test": "Verify eligible presales and deposits against the lender's definition, including cancellations and collections; test slower absorption and delayed closings in the cash-flow and debt-repayment schedule."
+     },
+     {
+      "area": "Model validation and evidence quality",
+      "issue": "The packet identifies 63 demo assumptions, four pending research proposals, and only three market comparables, while reporting detailed return outputs and no warnings. These disclosures weaken confidence in the revenue, cost, schedule, and valuation inputs; no independent validation is shown.",
+      "severity": "medium",
+      "evidence": "assumption_provenance.demo is 63; pending_research_proposals is 4; market_comps.n is 3; warnings and compliance_issues are empty.",
+      "suggested_test": "Replace or validate demo inputs with sourced project evidence, expand and document comparable support, close pending research, and independently audit model formulas and output checks."
+     },
+     {
+      "area": "Regulatory and compliance",
+      "issue": "The empty compliance-issues field is not evidence of regulatory clearance. The packet provides no permits, land/title diligence, zoning or construction approvals, presale/customer-protection review, or environmental and other required compliance evidence.",
+      "severity": "medium",
+      "evidence": "compliance_issues is empty; no permits, legal diligence, or regulatory documentation is included.",
+      "suggested_test": "Obtain counsel and technical-adviser confirmation of title, land use, permits, construction approvals, and applicable sales and environmental obligations before funding."
+     }
+    ],
+    "strengths": [
+     "Reported base equity IRR of 24.91% exceeds the stated 18.0% hurdle, and reported base profit is positive; these are model outputs, not independently validated results.",
+     "The packet reports 60.8% presales against a 30.0% first-draw threshold and 45.0% LTC against a 60.0% stated limit, subject to confirming definitions and calculations."
+    ]
+   }
+  },
+  "llm_used": true
+ },
+ "packet": {
+  "project": {
+   "name": "Polanco Residences (fictional)",
+   "location": "Polanco V Sección, Mexico City",
+   "business_model": "build_to_sell",
+   "fictional_demo": true
+  },
+  "metrics": {
+   "units": 75,
+   "total_cost": 755242255,
+   "gdv": 1036481352,
+   "profit": 281239097,
+   "net_margin_pct": 27.13,
+   "profit_on_cost_pct": 37.24,
+   "project_irr_pct": 25.17,
+   "equity_irr_pct": 24.91,
+   "moic": 1.68,
+   "npv": 122451851,
+   "peak_equity": 415383240,
+   "ltc_pct": 45.0,
+   "ltv_pct": 7.9,
+   "duration_months": 32,
+   "funding_gap": 0,
+   "investor_irr_pct": 22.14,
+   "sponsor_irr_pct": 35.17,
+   "dscr": null,
+   "hurdle_equity_irr_pct": 18.0
+  },
+  "covenants": [
+   {
+    "name": "Max LTC",
+    "limit": 60.0,
+    "actual": 45.0,
+    "ok": true
+   },
+   {
+    "name": "Max LTV (peak debt / GDV)",
+    "limit": 45.0,
+    "actual": 7.9,
+    "ok": true
+   },
+   {
+    "name": "Presales before first draw",
+    "limit": 30.0,
+    "actual": 60.8,
+    "ok": true
+   }
+  ],
+  "compliance_issues": [],
+  "warnings": [],
+  "scenarios": [
+   {
+    "name": "Base",
+    "equity_irr_pct": 24.91,
+    "profit": 281239097
+   },
+   {
+    "name": "Upside",
+    "equity_irr_pct": 31.77,
+    "profit": 365253023
+   },
+   {
+    "name": "Downside",
+    "equity_irr_pct": 11.49,
+    "profit": 154440803
+   }
+  ],
+  "top_sensitivities": [
+   {
+    "driver": "Sale price ±10%",
+    "equity_irr_low_pct": 16.91,
+    "equity_irr_high_pct": 32.24
+   },
+   {
+    "driver": "Construction ±6 months",
+    "equity_irr_low_pct": 31.43,
+    "equity_irr_high_pct": 20.21
+   },
+   {
+    "driver": "Land price ±10%",
+    "equity_irr_low_pct": 28.92,
+    "equity_irr_high_pct": 21.31
+   },
+   {
+    "driver": "Hard cost ±10%",
+    "equity_irr_low_pct": 28.09,
+    "equity_irr_high_pct": 21.75
+   }
+  ],
+  "assumption_provenance": {
+   "demo": 63
+  },
+  "pending_research_proposals": 4,
+  "market_comps": {
+   "n": 3,
+   "median_price_per_area": 101083
+  },
+  "key_assumptions": {
+   "site.land_area": 1800.0,
+   "site.land_price": 265000000.0,
+   "rev.price_per_area": 108000.0,
+   "rev.absorption_per_month": 3.0,
+   "cost.hard_per_area": 24000.0,
+   "sch.construction_months": 24,
+   "fin.senior_ltc_pct": 45.0
+  },
+  "sustainability_enabled": []
+ },
+ "turn_usage": {
+  "run_id": "e7a47c0eb2dd",
+  "model": "gpt-6-luna",
+  "by_agent": [
+   {
+    "agent": "IC Underwriting Challenger",
+    "requests": 1,
+    "input_tokens": 904,
+    "cached_tokens": 0,
+    "output_tokens": 1308,
+    "web_searches": 0,
+    "cost_usd": 0.0007444,
+    "seconds": 11.32
+   },
+   {
+    "agent": "IC Capital & Risk Challenger",
+    "requests": 1,
+    "input_tokens": 871,
+    "cached_tokens": 0,
+    "output_tokens": 1248,
+    "web_searches": 0,
+    "cost_usd": 0.0007111,
+    "seconds": 11.32
+   },
+   {
+    "agent": "IC Chair",
+    "requests": 1,
+    "input_tokens": 3458,
+    "cached_tokens": 0,
+    "output_tokens": 688,
+    "web_searches": 0,
+    "cost_usd": 0.0006898,
+    "seconds": 5.0
+   }
+  ],
+  "total": {
+   "requests": 3,
+   "input_tokens": 5233,
+   "cached_tokens": 0,
+   "output_tokens": 3244,
+   "web_searches": 0,
+   "cost_usd": 0.0021453
+  },
+  "limits": {
+   "max_specialist_calls": 2,
+   "max_tool_calls": 12,
+   "max_requests": 10,
+   "max_tokens": 250000,
+   "max_usd": 0.05
+  },
+  "seconds": 16.4
+ }
+}

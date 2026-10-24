@@ -1,0 +1,684 @@
+{
+ "Polanco Residences (fictional)": {
+  "sustainability": {
+   "request": "Parameters for solar PV, efficient HVAC, water saving, LED and green certification for a residential build to sell building in Mexico City, Mexico.",
+   "payload": {
+    "benchmarks": [
+     {
+      "measure_key": "solar_pv",
+      "item": "Indicative annual PV specific yield for Mexico City",
+      "value": 1518.0,
+      "unit": "kWh/kWp/year",
+      "verification": "indicative",
+      "source_title": "Solar Panels in Mexico City, Mexico — Irradiation, Sun Data & PV Yield",
+      "source_url": "https://www.sunveyor.com/solar/mexico-city",
+      "note": "Secondary location estimate, not Polanco rooftop simulation; shading, orientation, tilt and losses will change realized yield."
+     },
+     {
+      "measure_key": "solar_pv",
+      "item": "Installed PV cost per kWp",
+      "value": null,
+      "unit": "MXN/kWp",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No sufficiently reliable local source with a documented installed cost located."
+     },
+     {
+      "measure_key": "efficient_hvac",
+      "item": "Efficient HVAC cost and savings",
+      "value": null,
+      "unit": "MXN/unit and % energy savings",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No documented, comparable residential Mexico City measure cost/savings found."
+     },
+     {
+      "measure_key": "water_saving",
+      "item": "Low-flow fixture cost and water savings",
+      "value": null,
+      "unit": "MXN/fixture and % water savings",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No documented project-comparable cost or savings rate found."
+     },
+     {
+      "measure_key": "led_controls",
+      "item": "LED lighting cost and electricity savings",
+      "value": null,
+      "unit": "MXN/fixture and % electricity savings",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No documented project-comparable cost and savings figure found."
+     },
+     {
+      "measure_key": "edge_cert",
+      "item": "EDGE certification minimum performance threshold",
+      "value": 20.0,
+      "unit": "% reduction in energy use, water use, and embodied carbon versus local baseline",
+      "verification": "published",
+      "source_title": "EDGE — Green building certification",
+      "source_url": "https://edge.gbci.org/",
+      "note": "Performance threshold, not a certification cost or projected project saving. Certification fees depend on project area and applicable fee schedule."
+     },
+     {
+      "measure_key": "edge_cert",
+      "item": "EDGE certification fee for this project",
+      "value": null,
+      "unit": "USD or MXN/project",
+      "verification": "not_found",
+      "source_title": "Certification | EDGE",
+      "source_url": "https://edge.gbci.org/certification",
+      "note": "Published fee is area-dependent; project floor area is not provided, so no project fee can be specified."
+     }
+    ],
+    "caveats": [
+     "These are preliminary screening inputs, not engineering results or contractor quotes.",
+     "Only the Mexico City PV yield and EDGE threshold were found as documented numeric values suitable for reporting; other requested costs, savings, tariffs, and grid factor are left null rather than inferred.",
+     "No exact Polanco-specific PV yield or rooftop shading assessment was available."
+    ],
+    "suspicious_fields": []
+   },
+   "captured_at": "2026-10-24T04:29:57+00:00"
+  },
+  "financing": {
+   "request": "Reference interest rate and construction-loan terms for a residential development in Mexico City, Mexico.",
+   "payload": {
+    "rates": [
+     {
+      "item": "TIIE de Fondeo a un día (latest available observation found; reference benchmark, not a project quote)",
+      "key": "fin.reference_rate_pct",
+      "value_pct": 6.52,
+      "as_of": "2026-10-23",
+      "kind": "published_rate",
+      "institution": "Banco de México",
+      "source_title": "Tasas de interés representativas (CA51)",
+      "source_url": "https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?accion=consultarCuadroAnalitico&idCuadro=CA51&locale=es&sector=18",
+      "note": "Banxico table lists 6.52% annual for TIIE de fondeo a un día on 23 Oct 2026. 28-day TIIE listed at 6.7760% on 22–23 Oct 2026. The table has no observation for 24 Oct. Target rate: 6.50% on 23 Oct 2026."
+     },
+     {
+      "item": "TIIE de Fondeo Compuesta por Adelantado a 28 días plus lender spread; numeric spread not publicly specified in reviewed official terms",
+      "key": "fin.senior_spread_pct",
+      "value_pct": null,
+      "as_of": "2026-10-26",
+      "kind": "published_rate",
+      "institution": "SHF / participating financial intermediaries",
+      "source_title": "Crédito Puente",
+      "source_url": "https://www.gob.mx/shf/acciones-y-programas/credito-puente-406665",
+      "note": "SHF publishes benchmark-plus-surcharge structure but no numeric spread. Therefore no defensible numeric spread assumption is reported."
+     },
+     {
+      "item": "Maximum financing amount: up to 65% of project value (value-based maximum; not explicitly stated as loan-to-cost)",
+      "key": "fin.senior_ltc_pct",
+      "value_pct": 65.0,
+      "as_of": null,
+      "kind": "indicative_assumption",
+      "institution": "BBVA México / SHF",
+      "source_title": "Crédito Puente en Pesos; Crédito Puente",
+      "source_url": "https://www.bbva.mx/empresas/productos/financiamiento/financiamiento-hipotecario-promotor/credito-puente-en-pesos.html",
+      "note": "BBVA and SHF publish a maximum of 65% of project commercial/value. This is not explicitly LTC, so treat as a proxy only; SHF says credit reaches developers through financial entities."
+     },
+     {
+      "item": "Origination / opening fee for developer construction bridge loan",
+      "key": "fin.origination_fee_pct",
+      "value_pct": null,
+      "as_of": null,
+      "kind": "indicative_assumption",
+      "institution": null,
+      "source_title": null,
+      "source_url": null,
+      "note": "Not found in the reviewed official public bridge-loan terms; confirm directly with lender."
+     },
+     {
+      "item": "Minimum presales requirement for developer construction bridge loan",
+      "key": "fin.min_presales_pct",
+      "value_pct": null,
+      "as_of": null,
+      "kind": "indicative_assumption",
+      "institution": null,
+      "source_title": null,
+      "source_url": null,
+      "note": "Not found in the reviewed official public bridge-loan terms; confirm directly with lender."
+     }
+    ],
+    "lenders": [
+     "BBVA México — publicly offers Crédito Puente en Pesos; up to 65% of project commercial value; benchmark + financial margin.",
+     "Banorte — publicly offers Proyectos Inmobiliarios / bridge financing; page states financing up to 80% of total project value; not identified as LTC.",
+     "Sociedad Hipotecaria Federal (SHF) — Crédito Puente line offered to financial entities, with developer loans intermediated; up to 65% project value, up to 48 months; 28-day compounded TIIE funding plus surcharge.",
+     "Banco Inmobiliario Mexicano (BIM) — publicly offers syndicated bridge loans, up to 65% project value, up to 20% advance, up to 42 months.",
+     "Santander — no public developer bridge-loan product terms located in reviewed searches; public-facing pages found were housing-buyer products."
+    ],
+    "caveats": [
+     "Published central-bank observations: TIIE de fondeo 6.52% and target 6.50% as of 23 Oct 2026; 28-day TIIE 6.7760% on 23 Oct 2026. The requested October 24 date falls on a non-business day and the table shows no observation that day.",
+     "No public, project-specific lender offer exists in these sources. Spread, origination fee and presale threshold are not established by the reviewed official pages; these require lender underwriting and a direct quote.",
+     "Polanco V Sección is a premium residential context, but the public terms found are general housing-development products and may not apply to this specific luxury project or borrower.",
+     "SHF’s 65% is a maximum against project value, not a published loan-to-cost ratio."
+    ],
+    "suspicious_fields": []
+   },
+   "captured_at": "2026-10-24T04:29:44+00:00"
+  },
+  "cost": {
+   "request": "Construction cost benchmarks per m² for high-quality residential build to sell (mid-rise, 8 stories, with underground parking) in Mexico City, Mexico, current year.",
+   "payload": {
+    "benchmarks": [
+     {
+      "item": "High-quality mid-rise residential hard construction cost, Polanco V Sección / Mexico City (8 stories, underground parking). No public source located that states a directly applicable cost per m² for this exact typology and quality; numeric cost benchmark not reported.",
+      "key": "cost.hard_per_area",
+      "value": null,
+      "unit": "MXN per m² gross building area",
+      "low": null,
+      "high": null,
+      "year": "2026",
+      "verification": "not_found",
+      "source_title": "BIMSA Costos; CMIC/CEICO Catálogo de Costos Directos de Vivienda 2025",
+      "source_url": "https://bimsacostos.com/",
+      "note": "BIMSA advertises paid access to parametric cost-per-m² models, but public page does not disclose figures. The CMIC/CEICO catalog is presented as a reference for direct housing costs; accessible public listing does not expose applicable cost values. Neither source supports a numeric high-quality 8-story Polanco project rate."
+     },
+     {
+      "item": "Underground parking / basement hard cost per m². No directly applicable published public cost value found.",
+      "key": "cost.below_grade_per_area",
+      "value": null,
+      "unit": "MXN per m² gross basement area",
+      "low": null,
+      "high": null,
+      "year": "2026",
+      "verification": "not_found",
+      "source_title": "BIMSA Costos",
+      "source_url": "https://bimsacostos.com/",
+      "note": "BIMSA lists parking among its parametric project categories, but does not publish numeric model outputs on its public page."
+     },
+     {
+      "item": "Annual construction cost escalation indicator: residential construction price change, Mexico, July 2025–July 2026",
+      "key": "cost.escalation_pct",
+      "value": 5.63,
+      "unit": "% year over year",
+      "low": null,
+      "high": null,
+      "year": "2026 (July; 12-month change)",
+      "verification": "published_benchmark",
+      "source_title": "CEICO, Variaciones en el precio de la construcción residencial, agosto 2026 (based on INEGI)",
+      "source_url": "https://www.cmic.org.mx/comisiones/Tematicas/costosyp/Informes_CEICO/INEGI/2026/08_Agosto/CEICO_Informe_Agosto_2026_Construccion_Residencial_por_Ciudad.pdf",
+      "note": "National residential construction price inflation reported by CEICO using INEGI data. This is an index change, not a Polanco-specific forecast or project escalation allowance."
+     },
+     {
+      "item": "Design / professional fees percentage",
+      "key": "cost.design_pct",
+      "value": null,
+      "unit": "% of hard cost",
+      "low": null,
+      "high": null,
+      "year": "2026",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No sufficiently supported public benchmark found."
+     },
+     {
+      "item": "Permits / fees percentage",
+      "key": "cost.permits_pct",
+      "value": null,
+      "unit": "% of hard cost",
+      "low": null,
+      "high": null,
+      "year": "2026",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No sufficiently supported percentage benchmark found."
+     }
+    ],
+    "caveats": [
+     "Benchmarks are not contractor quotations. Publicly accessible material reviewed did not provide a numeric cost-per-m² for the requested high-quality, 8-story Mexico City residential typology with underground parking; do not treat generic house-building rates as equivalent.",
+     "CMIC/CEICO reports national residential price movement; its published figure is not a cost level and should not be extrapolated as a Polanco-specific rate without project pricing.",
+     "The accessible CMIC/CEICO catalog says its direct-cost catalog is illustrative and based on average working conditions, with project-specific variables affecting results."
+    ],
+    "suspicious_fields": []
+   },
+   "captured_at": "2026-10-24T04:29:26+00:00"
+  },
+  "market": {
+   "request": "Comparable new apartments for sale (high quality) in Polanco V Sección, Mexico City.",
+   "payload": {
+    "comparables": [
+     {
+      "title": "Venta de departamento Schiller, ID 29748236",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+      "size": 150.0,
+      "bedrooms": 3,
+      "bathrooms": 3.0,
+      "price": null,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": null,
+      "amenities": [],
+      "listing_date": null,
+      "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+      "notes": "Portal search result provides size and room count, but no price or unit-level details."
+     },
+     {
+      "title": "Venta de departamento Suderman, ID 30483355",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+      "size": 62.0,
+      "bedrooms": 1,
+      "bathrooms": 1.0,
+      "price": 6500000.0,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": null,
+      "amenities": [],
+      "listing_date": null,
+      "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+      "notes": "The portal's search result shows an asking price."
+     },
+     {
+      "title": "Venta de departamento Schiller, ID 29548125",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+      "size": 277.0,
+      "bedrooms": 3,
+      "bathrooms": 2.0,
+      "price": 28000000.0,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": null,
+      "amenities": [
+       "Terraza"
+      ],
+      "listing_date": null,
+      "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+      "notes": "Price, size, bedroom count and terrace appear in portal search results."
+     },
+     {
+      "title": "Departamento en venta con amenidades a 3 calles de Antara, ID 28263797",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+      "size": 86.0,
+      "bedrooms": 2,
+      "bathrooms": 2.0,
+      "price": 7659400.0,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": null,
+      "amenities": [
+       "Mascotas permitidas",
+       "Lavandería",
+       "Terraza"
+      ],
+      "listing_date": null,
+      "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+      "notes": "Portal search result snippet; listing's detailed quality/finish description not confirmed."
+     },
+     {
+      "title": "Departamento en venta, Schiller",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta",
+      "size": 192.0,
+      "bedrooms": 2,
+      "bathrooms": 3.5,
+      "price": null,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": "Acabados de alta calidad (según anuncio)",
+      "amenities": [
+       "Terrazas",
+       "Vistas panorámicas"
+      ],
+      "listing_date": null,
+      "source_url": "https://www.inmuebles24.com/departamentos-en-venta-en-polanco-v-seccion-zona-de-polanco.html",
+      "notes": "Listing snippet states 146 m² interior plus 15 m² terraces; 3 full bathrooms and 1 half bathroom. Total size reported by portal as 192 m²; no price surfaced."
+     },
+     {
+      "title": "Departamento de lujo, Hipólito Taine",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta",
+      "size": 350.0,
+      "bedrooms": 3,
+      "bathrooms": 4.0,
+      "price": null,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": "Descrito por el anuncio como de lujo",
+      "amenities": [
+       "Estudio",
+       "Cocina integral",
+       "Cuarto de servicio",
+       "Área de lavado",
+       "2 estacionamientos",
+       "Bodega"
+      ],
+      "listing_date": null,
+      "source_url": "https://tecnocasa.mx/detalle-inmueble/venta-departamento-polanco-v-seccion-81984tc",
+      "notes": "Anuncio sitúa el inmueble cerca de Masaryk y Parque Lincoln; precio no visible en el resultado consultado."
+     },
+     {
+      "title": "Departamento de lujo en el corazón de Polanco",
+      "neighborhood": "Polanco V Sección",
+      "property_type": "Departamento en venta",
+      "size": 260.0,
+      "bedrooms": 3,
+      "bathrooms": 3.5,
+      "price": null,
+      "currency": "MXN",
+      "price_type": "asking",
+      "quality": "Anuncio describe el inmueble como de lujo",
+      "amenities": [
+       "Elevador directo al departamento",
+       "2 estacionamientos"
+      ],
+      "listing_date": null,
+      "source_url": "https://www.easybroker.com/mx/home/departamento-de-lujo-en-el-corazon-de-polanco-polanco-v-seccion",
+      "notes": "Portal dice que forma parte de condominio de 22 departamentos en dos torres; listado hace varios años, disponibilidad/precio no confirmados."
+     }
+    ],
+    "market_notes": [],
+    "absorption_evidence": null,
+    "caveats": [
+     "Busqué comparables anunciados como nuevos, pero la evidencia recuperada permite solo seis registros y varios carecen de precio o detalles verificables; la selección debe tratarse como indicativa, no como una muestra exhaustiva de unidades nuevas de alta calidad.",
+     "Todos los precios disponibles son precios de oferta/listado. No encontré evidencia de ventas cerradas, así que no se reportan precios de transacción.",
+     "Portales y anuncios inmobiliarios son fuentes secundarias; el rótulo «nuevo» proviene del filtro/clasificación del portal y no verifica por sí solo año de construcción, entrega o condición de obra."
+    ],
+    "summary": {
+     "rows": [
+      {
+       "title": "Venta de departamento Schiller, ID 29748236",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+       "size": 150.0,
+       "bedrooms": 3,
+       "bathrooms": 3.0,
+       "price": null,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": null,
+       "amenities": [],
+       "listing_date": null,
+       "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+       "notes": "Portal search result provides size and room count, but no price or unit-level details.",
+       "price_per_area": null
+      },
+      {
+       "title": "Venta de departamento Suderman, ID 30483355",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+       "size": 62.0,
+       "bedrooms": 1,
+       "bathrooms": 1.0,
+       "price": 6500000.0,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": null,
+       "amenities": [],
+       "listing_date": null,
+       "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+       "notes": "The portal's search result shows an asking price.",
+       "price_per_area": 104838.70967741935
+      },
+      {
+       "title": "Venta de departamento Schiller, ID 29548125",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+       "size": 277.0,
+       "bedrooms": 3,
+       "bathrooms": 2.0,
+       "price": 28000000.0,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": null,
+       "amenities": [
+        "Terraza"
+       ],
+       "listing_date": null,
+       "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+       "notes": "Price, size, bedroom count and terrace appear in portal search results.",
+       "price_per_area": 101083.03249097473
+      },
+      {
+       "title": "Departamento en venta con amenidades a 3 calles de Antara, ID 28263797",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta; portal lo clasifica como nuevo",
+       "size": 86.0,
+       "bedrooms": 2,
+       "bathrooms": 2.0,
+       "price": 7659400.0,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": null,
+       "amenities": [
+        "Mascotas permitidas",
+        "Lavandería",
+        "Terraza"
+       ],
+       "listing_date": null,
+       "source_url": "https://propiedades.com/polanco-v-seccion-df/departamentos-venta/nuevo",
+       "notes": "Portal search result snippet; listing's detailed quality/finish description not confirmed.",
+       "price_per_area": 89062.79069767441
+      },
+      {
+       "title": "Departamento en venta, Schiller",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta",
+       "size": 192.0,
+       "bedrooms": 2,
+       "bathrooms": 3.5,
+       "price": null,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": "Acabados de alta calidad (según anuncio)",
+       "amenities": [
+        "Terrazas",
+        "Vistas panorámicas"
+       ],
+       "listing_date": null,
+       "source_url": "https://www.inmuebles24.com/departamentos-en-venta-en-polanco-v-seccion-zona-de-polanco.html",
+       "notes": "Listing snippet states 146 m² interior plus 15 m² terraces; 3 full bathrooms and 1 half bathroom. Total size reported by portal as 192 m²; no price surfaced.",
+       "price_per_area": null
+      },
+      {
+       "title": "Departamento de lujo, Hipólito Taine",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta",
+       "size": 350.0,
+       "bedrooms": 3,
+       "bathrooms": 4.0,
+       "price": null,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": "Descrito por el anuncio como de lujo",
+       "amenities": [
+        "Estudio",
+        "Cocina integral",
+        "Cuarto de servicio",
+        "Área de lavado",
+        "2 estacionamientos",
+        "Bodega"
+       ],
+       "listing_date": null,
+       "source_url": "https://tecnocasa.mx/detalle-inmueble/venta-departamento-polanco-v-seccion-81984tc",
+       "notes": "Anuncio sitúa el inmueble cerca de Masaryk y Parque Lincoln; precio no visible en el resultado consultado.",
+       "price_per_area": null
+      },
+      {
+       "title": "Departamento de lujo en el corazón de Polanco",
+       "neighborhood": "Polanco V Sección",
+       "property_type": "Departamento en venta",
+       "size": 260.0,
+       "bedrooms": 3,
+       "bathrooms": 3.5,
+       "price": null,
+       "currency": "MXN",
+       "price_type": "asking",
+       "quality": "Anuncio describe el inmueble como de lujo",
+       "amenities": [
+        "Elevador directo al departamento",
+        "2 estacionamientos"
+       ],
+       "listing_date": null,
+       "source_url": "https://www.easybroker.com/mx/home/departamento-de-lujo-en-el-corazon-de-polanco-polanco-v-seccion",
+       "notes": "Portal dice que forma parte de condominio de 22 departamentos en dos torres; listado hace varios años, disponibilidad/precio no confirmados.",
+       "price_per_area": null
+      }
+     ],
+     "stats": {
+      "n": 3,
+      "median": 101083.03249097473,
+      "mean": 98328.17762202282,
+      "min": 89062.79069767441,
+      "max": 104838.70967741935,
+      "p25": 89062.79069767441,
+      "p75": 104838.70967741935
+     }
+    },
+    "suspicious_fields": []
+   },
+   "captured_at": "2026-10-24T04:29:16+00:00"
+  },
+  "regulatory": {
+   "request": "Development regulations (zoning code, stories, open area, FAR, density, parking) for a 1800.0 m² lot at Fictional lot near Calle Lope de Vega, Polanco, Miguel Hidalgo, Polanco V Sección, Mexico City, Ciudad de México, Mexico.",
+   "payload": {
+    "zoning_code": null,
+    "zoning_summary": "No parcel-specific zoning code can be verified from the description “Fictional lot near Calle Lope de Vega.” The supplied location lacks a precise street number, cadastral account or parcel geometry. Polanco has a special Programa Parcial de Desarrollo Urbano, but neighborhood membership alone does not establish this lot’s zoning.",
+    "permitted_uses": [],
+    "findings": [
+     {
+      "parameter": "Zoning code",
+      "key": null,
+      "value": null,
+      "value_text": null,
+      "unit": null,
+      "verification": "not_found",
+      "source_title": "SEDUVI / SIGCDMX interactive map",
+      "source_url": "https://sig.cdmx.gob.mx/sig_cdmx/",
+      "note": "Parcel-specific zoning requires identifying the exact parcel in the official map or obtaining its Certificado Único de Zonificación de Uso del Suelo."
+     },
+     {
+      "parameter": "Maximum stories",
+      "key": "reg.max_stories",
+      "value": null,
+      "value_text": null,
+      "unit": null,
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "Cannot establish without the parcel's zoning designation."
+     },
+     {
+      "parameter": "Minimum open area",
+      "key": "reg.min_open_area_pct",
+      "value": null,
+      "value_text": null,
+      "unit": "%",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "Cannot establish without the parcel's zoning designation."
+     },
+     {
+      "parameter": "Maximum FAR",
+      "key": "reg.max_far",
+      "value": null,
+      "value_text": null,
+      "unit": null,
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No parcel-specific FAR located."
+     },
+     {
+      "parameter": "Maximum height",
+      "key": "reg.max_height_m",
+      "value": null,
+      "value_text": null,
+      "unit": "m",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "Cannot establish without parcel-specific rules."
+     },
+     {
+      "parameter": "Minimum land per dwelling unit",
+      "key": "reg.min_land_per_unit",
+      "value": null,
+      "value_text": null,
+      "unit": "m²/unit",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "Density designation not established."
+     },
+     {
+      "parameter": "Maximum dwelling units",
+      "key": "reg.max_units",
+      "value": null,
+      "value_text": null,
+      "unit": "units",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No verified density rule or parcel-specific unit cap."
+     },
+     {
+      "parameter": "Maximum underground levels",
+      "key": "reg.max_underground_levels",
+      "value": null,
+      "value_text": null,
+      "unit": null,
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No parcel-specific underground-level limit verified."
+     },
+     {
+      "parameter": "Minimum parking per dwelling unit",
+      "key": "reg.parking_min_per_unit",
+      "value": null,
+      "value_text": null,
+      "unit": "spaces/unit",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "Applicable parking requirement depends on use and project characteristics; no use was specified."
+     },
+     {
+      "parameter": "Maximum parking per dwelling unit",
+      "key": "reg.parking_max_per_unit",
+      "value": null,
+      "value_text": null,
+      "unit": "spaces/unit",
+      "verification": "not_found",
+      "source_title": null,
+      "source_url": null,
+      "note": "No parcel- and project-specific parking maximum verified."
+     },
+     {
+      "parameter": "Applicable special planning instrument",
+      "key": null,
+      "value": null,
+      "value_text": "Programa Parcial de Desarrollo Urbano Polanco",
+      "unit": null,
+      "verification": "preliminary",
+      "source_title": "SEDUVI: Programas de Desarrollo Urbano",
+      "source_url": "https://data.seduvi.cdmx.gob.mx/portal/index.php/que-hacemos/programas-de-desarrollo",
+      "note": "Polanco has a special partial-development planning instrument; applicability to the unidentified parcel and its precise controls must be confirmed on the official map or certificate."
+     }
+    ],
+    "missing": [
+     "Exact parcel identification (street number and ideally cadastral account or parcel polygon) needed to query zoning and applicable parcel-specific rules.",
+     "Project use and dwelling-unit mix needed to assess parking requirements.",
+     "Obtain a Certificado Único de Zonificación de Uso del Suelo for authoritative confirmation."
+    ],
+    "caveats": [
+     "The official SIGCDMX describes a parcel-level land-use registry; an approximate neighborhood description is insufficient to identify the governing parcel designation.",
+     "Do not infer a zoning code or numeric development controls from Polanco neighborhood context or lot area alone."
+    ],
+    "suspicious_fields": []
+   },
+   "captured_at": "2026-10-24T04:29:03+00:00"
+  }
+ }
+}

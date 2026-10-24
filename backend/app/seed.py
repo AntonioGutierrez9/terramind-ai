@@ -49,5 +49,7 @@ def seed_if_empty() -> list[int]:
                 store.upsert_actual(pid, row["month"], row)
         for kind, snap in (snapshots.get(case["profile"]["name"]) or {}).items():
             store.save_research(pid, kind, snap.get("request", ""), snap["payload"], from_cache=True)
+            from .agents.specialists import _proposals  # researched values arrive as PENDING proposals
+            store.propose_values(pid, kind, _proposals(kind, snap["payload"]))
         ids.append(pid)
     return ids
